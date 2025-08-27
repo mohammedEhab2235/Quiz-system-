@@ -1,0 +1,181 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Interface Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Interface Management</h2>
+                <a href="{% url 'administration:interface_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Interface
+                </a>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">System Interfaces</h5>
+                </div>
+                <div class="card-body">
+                    {% if interfaces %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Module Name</th>
+                                        <th>Function</th>
+                                        <th>URL Pattern</th>
+                                        <th>Created Date</th>
+                                        <th>Users with Access</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for interface in interfaces %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ interface.module_name }}</strong>
+                                            </td>
+                                            <td>{{ interface.function }}</td>
+                                            <td>
+                                                <code>{{ interface.url }}</code>
+                                            </td>
+                                            <td>{{ interface.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    {{ interface.user_access.filter:has_access=True|length }} users
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-info" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#interfaceModal{{ interface.interface_id }}">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </button>
+                                                    <a href="{% url 'administration:bulk_interface_access' %}?interface={{ interface.interface_id }}" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-users"></i> Manage Access
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Interface Details Modal -->
+                                        <div class="modal fade" id="interfaceModal{{ interface.interface_id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Interface Details</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <dl class="row">
+                                                            <dt class="col-sm-4">Module Name:</dt>
+                                                            <dd class="col-sm-8">{{ interface.module_name }}</dd>
+                                                            
+                                                            <dt class="col-sm-4">Function:</dt>
+                                                            <dd class="col-sm-8">{{ interface.function }}</dd>
+                                                            
+                                                            <dt class="col-sm-4">URL Pattern:</dt>
+                                                            <dd class="col-sm-8"><code>{{ interface.url }}</code></dd>
+                                                            
+                                                            <dt class="col-sm-4">Created:</dt>
+                                                            <dd class="col-sm-8">{{ interface.created_at|date:"F d, Y g:i A" }}</dd>
+                                                            
+                                                            <dt class="col-sm-4">Users with Access:</dt>
+                                                            <dd class="col-sm-8">
+                                                                {% for access in interface.user_access.all %}
+                                                                    {% if access.has_access %}
+                                                                        <span class="badge bg-success me-1">{{ access.user.name }}</span>
+                                                                    {% endif %}
+                                                                {% empty %}
+                                                                    <span class="text-muted">No users have access</span>
+                                                                {% endfor %}
+                                                            </dd>
+                                                        </dl>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Interfaces Found</h5>
+                            <p class="text-muted">Create your first interface to start managing access control.</p>
+                            <a href="{% url 'administration:interface_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Interface
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Quick Actions</h6>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'administration:bulk_interface_access' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-users-cog"></i> Bulk Access Management
+                                </a>
+                                <a href="{% url 'administration:user_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-users"></i> Manage Users
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Interface Statistics</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h4 class="text-primary">{{ interfaces|length }}</h4>
+                                        <small class="text-muted">Total Interfaces</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-success">{{ interfaces|length }}</h4>
+                                    <small class="text-muted">Active Modules</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+</script>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Dashboard" %} - {% trans "Quiz System" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    {% trans "Welcome" %}, {{ user.name }}
+                </h2>
+                <div class="text-muted">
+                    <i class="fas fa-clock me-1"></i>
+                    {% trans "Last login" %}: {{ user.last_login|date:"M d, Y H:i" }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Info Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">{% trans "User Information" %}</h6>
+                    <p class="mb-1"><strong>{% trans "Position" %}:</strong> {{ user.position }}</p>
+                    <p class="mb-1"><strong>{% trans "Phone" %}:</strong> {{ user.phone_number }}</p>
+                    <p class="mb-0"><strong>{% trans "National ID" %}:</strong> {{ user.national_id }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card text-center bg-primary text-white">
+                        <div class="card-body">
+                            <h3 class="mb-0">{{ assigned_exams.count }}</h3>
+                            <small>{% trans "Assigned Exams" %}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center bg-success text-white">
+                        <div class="card-body">
+                            <h3 class="mb-0">{{ completed_exams.count }}</h3>
+                            <small>{% trans "Completed" %}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center bg-warning text-white">
+                        <div class="card-body">
+                            <h3 class="mb-0">{{ pending_exams.count }}</h3>
+                            <small>{% trans "Pending" %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assigned Exams -->
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-clipboard-list me-2"></i>
+                {% trans "Your Assigned Exams" %}
+            </h4>
+            
+            {% if assigned_exams %}
+                <div class="row">
+                    {% for user_exam in assigned_exams %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card exam-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">{{ user_exam.exam.exam_title }}</h6>
+                                {% if user_exam.status == 'completed' %}
+                                    <span class="badge bg-success">{% trans "Completed" %}</span>
+                                {% elif user_exam.status == 'in_progress' %}
+                                    <span class="badge bg-warning">{% trans "In Progress" %}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{% trans "Not Started" %}</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-muted mb-2">
+                                    <strong>{% trans "Course" %}:</strong> {{ user_exam.exam.course.name }}
+                                </p>
+                                <p class="card-text mb-2">
+                                    {{ user_exam.exam.description|truncatewords:15 }}
+                                </p>
+                                <div class="row text-center mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">{% trans "Duration" %}</small>
+                                        <div><strong>{{ user_exam.exam.duration }} {% trans "min" %}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">{% trans "Questions" %}</small>
+                                        <div><strong>{{ user_exam.exam.questions.count }}</strong></div>
+                                    </div>
+                                </div>
+                                
+                                {% if user_exam.exam.start_time %}
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {% trans "Available from" %}: {{ user_exam.exam.start_time|date:"M d, Y H:i" }}
+                                    </small>
+                                </p>
+                                {% endif %}
+                                
+                                {% if user_exam.exam.end_time %}
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar-times me-1"></i>
+                                        {% trans "Available until" %}: {{ user_exam.exam.end_time|date:"M d, Y H:i" }}
+                                    </small>
+                                </p>
+                                {% endif %}
+                                
+                                {% if user_exam.status == 'completed' %}
+                                    <p class="card-text">
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            {% trans "Completed on" %}: {{ user_exam.completed_at|date:"M d, Y H:i" }}
+                                        </small>
+                                    </p>
+                                    {% if user_exam.score is not None %}
+                                    <p class="card-text">
+                                        <strong>{% trans "Score" %}: {{ user_exam.score }}%</strong>
+                                    </p>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                {% if user_exam.status == 'completed' %}
+                                    <button class="btn btn-outline-primary btn-sm" disabled>
+                                        <i class="fas fa-check me-1"></i>
+                                        {% trans "Completed" %}
+                                    </button>
+                                {% elif user_exam.status == 'in_progress' %}
+                                    <a href="{% url 'exams:take_exam' user_exam.user_exam_id %}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-play me-1"></i>
+                                        {% trans "Continue Exam" %}
+                                    </a>
+                                {% else %}
+                                    {% if user_exam.exam.is_available and user_exam.can_take_exam %}
+                                        <a href="{% url 'exams:take_exam' user_exam.user_exam_id %}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-play me-1"></i>
+                                            {% trans "Start Exam" %}
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            <i class="fas fa-clock me-1"></i>
+                                            {% if not user_exam.exam.is_available %}
+                                                {% trans "Not Available" %}
+                                            {% elif not user_exam.can_take_exam %}
+                                                {% trans "No Attempts Left" %}
+                                            {% else %}
+                                                {% trans "Not Available" %}
+                                            {% endif %}
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">{% trans "No Exams Assigned" %}</h5>
+                    <p class="text-muted">{% trans "You don't have any exams assigned at the moment." %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Session check to ensure user is still logged in
+setInterval(function() {
+    fetch('{% url "authentication:check_session" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.authenticated) {
+                window.location.href = '{% url "authentication:login" %}';
+            }
+        })
+        .catch(error => {
+            console.error('Session check failed:', error);
+        });
+}, 300000); // Check every 5 minutes
+</script>
+{% endblock %}

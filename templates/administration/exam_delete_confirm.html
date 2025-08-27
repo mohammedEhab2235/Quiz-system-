@@ -1,0 +1,61 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> {{ title }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-warning"></i> Warning!
+                        </h5>
+                        <p>You are about to delete the following exam:</p>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Exam Title:</strong></div>
+                            <div class="col-sm-8">{{ exam.exam_title }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Course:</strong></div>
+                            <div class="col-sm-8">{{ exam.course.course_name }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Time Limit:</strong></div>
+                            <div class="col-sm-8">{{ exam.time_limit }} minutes</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Questions:</strong></div>
+                            <div class="col-sm-8">{{ exam.questions.count }} questions</div>
+                        </div>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>This action cannot be undone!</strong> All associated questions, user assignments, and exam results will also be deleted.
+                        </p>
+                    </div>
+                    
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'administration:exam_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Yes, Delete Exam
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

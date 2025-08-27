@@ -1,0 +1,178 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Create Assignment{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .form-section h5 {
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .required-field {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>
+                        Create Assignment
+                    </h2>
+                    <p class="text-muted mb-0">Assign exams to students</p>
+                </div>
+                <a href="{% url 'administration:assignment_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Assignments
+                </a>
+            </div>
+
+            <!-- Assignment Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Student Selection -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-user me-2"></i>Student Selection</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="id_user" class="form-label">
+                                        Student <span class="required-field">*</span>
+                                    </label>
+                                    <select name="user" id="id_user" class="form-select" required>
+                                        <option value="">Select a student...</option>
+                                        {% for user in users %}
+                                            <option value="{{ user.id }}" {% if form.user.value == user.id %}selected{% endif %}>
+                                                {{ user.name }} ({{ user.national_id }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.user.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.user.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exam Selection -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-file-alt me-2"></i>Exam Selection</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="id_exam" class="form-label">
+                                        Exam <span class="required-field">*</span>
+                                    </label>
+                                    <select name="exam" id="id_exam" class="form-select" required>
+                                        <option value="">Select an exam...</option>
+                                        {% for exam in exams %}
+                                            <option value="{{ exam.exam_id }}" {% if form.exam.value == exam.exam_id %}selected{% endif %}>
+                                                {{ exam.exam_title }} - {{ exam.course.course_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.exam.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.exam.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Assignment Settings -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-cog me-2"></i>Assignment Settings</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="id_due_date" class="form-label">
+                                        Due Date
+                                    </label>
+                                    <input type="datetime-local" name="due_date" id="id_due_date" 
+                                           class="form-control" value="{{ form.due_date.value|default:'' }}">
+                                    <small class="form-text text-muted">Leave empty for no due date</small>
+                                    {% if form.due_date.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.due_date.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_attempts_allowed" class="form-label">
+                                        Attempts Allowed
+                                    </label>
+                                    <input type="number" name="attempts_allowed" id="id_attempts_allowed" 
+                                           class="form-control" min="1" value="{{ form.attempts_allowed.value|default:'1' }}">
+                                    <small class="form-text text-muted">Leave empty for unlimited attempts</small>
+                                    {% if form.attempts_allowed.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in form.attempts_allowed.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'administration:assignment_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Assignment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-populate exam details when exam is selected
+    document.getElementById('id_exam').addEventListener('change', function() {
+        const examId = this.value;
+        if (examId) {
+            // You can add AJAX call here to fetch exam details if needed
+            console.log('Selected exam:', examId);
+        }
+    });
+    
+    // Auto-populate user details when user is selected
+    document.getElementById('id_user').addEventListener('change', function() {
+        const userId = this.value;
+        if (userId) {
+            // You can add AJAX call here to fetch user details if needed
+            console.log('Selected user:', userId);
+        }
+    });
+</script>
+{% endblock %}

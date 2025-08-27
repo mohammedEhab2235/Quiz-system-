@@ -1,0 +1,278 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Question Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">Question Management</h4>
+                            {% if exam %}
+                                <small class="text-muted">{{ exam.exam_title }} - {{ exam.course.course_name }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'administration:exam_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Exams
+                            </a>
+                            <a href="{% url 'administration:question_create' %}{% if exam %}?exam={{ exam.exam_id }}{% endif %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add Question
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="exam_filter" class="form-label">Exam</label>
+                            <select class="form-select" id="exam_filter" name="exam">
+                                <option value="">All Exams</option>
+                                {% for exam_option in exams %}
+                                    <option value="{{ exam_option.exam_id }}" {% if exam_option.exam_id == exam_id %}selected{% endif %}>
+                                        {{ exam_option.exam_title }} - {{ exam_option.course.course_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="question_type" class="form-label">Question Type</label>
+                            <select class="form-select" id="question_type" name="question_type">
+                                <option value="">All Types</option>
+                                <option value="multiple_choice" {% if request.GET.question_type == 'multiple_choice' %}selected{% endif %}>Multiple Choice</option>
+                                <option value="true_false" {% if request.GET.question_type == 'true_false' %}selected{% endif %}>True/False</option>
+                                <option value="short_answer" {% if request.GET.question_type == 'short_answer' %}selected{% endif %}>Short Answer</option>
+                                <option value="essay" {% if request.GET.question_type == 'essay' %}selected{% endif %}>Essay</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ request.GET.search }}" placeholder="Search questions...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <a href="{% url 'administration:question_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Questions List -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Questions ({{ page_obj.paginator.count }})</h5>
+                        {% if exam %}
+                            <div class="text-muted">
+                                Total Points: <strong>{{ total_points }}</strong>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 5%">#</th>
+                                        <th style="width: 40%">Question</th>
+                                        <th style="width: 15%">Type</th>
+                                        <th style="width: 10%">Points</th>
+                                        <th style="width: 15%">Exam</th>
+                                        <th style="width: 15%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for question in page_obj %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ forloop.counter }}</span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h6 class="mb-1">{{ question.question_text|truncatechars:80 }}</h6>
+                                                {% if question.question_type == 'multiple_choice' %}
+                                                    <small class="text-muted">
+                                                        A: {{ question.option_a|truncatechars:20 }}
+                                                    </small>
+                                                {% elif question.question_type == 'true_false' %}
+                                                    <small class="text-muted">
+                                                        Correct: {% if question.correct_answer %}True{% else %}False{% endif %}
+                                                    </small>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if question.question_type == 'multiple_choice' %}primary{% elif question.question_type == 'true_false' %}success{% elif question.question_type == 'short_answer' %}warning{% else %}info{% endif %}">
+                                                {{ question.get_question_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ question.points }}</span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h6 class="mb-0">{{ question.exam.exam_title|truncatechars:30 }}</h6>
+                                                <small class="text-muted">{{ question.exam.course.course_name }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'administration:question_edit' question.question_id %}" 
+                                                   class="btn btn-outline-primary" title="Edit Question">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="btn btn-outline-info" title="Preview Question" 
+                                                        onclick="previewQuestion('{{ question.question_id }}');">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" title="Delete Question" 
+                                                        onclick="confirmDelete('{{ question.question_id }}', '{{ question.question_text|truncatechars:30|escapejs }}');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                            <nav aria-label="Questions pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.exam %}&exam={{ request.GET.exam }}{% endif %}{% if request.GET.question_type %}&question_type={{ request.GET.question_type }}{% endif %}">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.exam %}&exam={{ request.GET.exam }}{% endif %}{% if request.GET.question_type %}&question_type={{ request.GET.question_type }}{% endif %}">
+                                                <i class="fas fa-angle-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.exam %}&exam={{ request.GET.exam }}{% endif %}{% if request.GET.question_type %}&question_type={{ request.GET.question_type }}{% endif %}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.exam %}&exam={{ request.GET.exam }}{% endif %}{% if request.GET.question_type %}&question_type={{ request.GET.question_type }}{% endif %}">
+                                                <i class="fas fa-angle-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.exam %}&exam={{ request.GET.exam }}{% endif %}{% if request.GET.question_type %}&question_type={{ request.GET.question_type }}{% endif %}">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Questions Found</h5>
+                            <p class="text-muted mb-3">{% if exam %}This exam has no questions yet.{% else %}No questions match your search criteria.{% endif %}</p>
+                            <a href="{% url 'administration:question_create' %}{% if exam %}?exam={{ exam.exam_id }}{% endif %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create First Question
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Preview Modal -->
+<div class="modal fade" id="questionPreviewModal" tabindex="-1" aria-labelledby="questionPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="questionPreviewModalLabel">Question Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="questionPreviewContent">
+                <!-- Question content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewQuestion(questionId) {
+    fetch(`/administration/questions/${questionId}/preview/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('questionPreviewContent').innerHTML = data.html;
+                var modal = new bootstrap.Modal(document.getElementById('questionPreviewModal'));
+                modal.show();
+            } else {
+                alert('Error loading question preview: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error loading question preview: ' + error);
+        });
+}
+
+function confirmDelete(questionId, questionText) {
+    if (confirm(`Are you sure you want to delete this question?\n\n"${questionText}"\n\nThis action cannot be undone.`)) {
+        fetch(`/administration/questions/${questionId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting question: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting question: ' + error);
+        });
+    }
+}
+</script>
+{% endblock %}

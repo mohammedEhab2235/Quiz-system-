@@ -1,0 +1,302 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Administration Dashboard - Quiz System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.8;
+    }
+    .quick-action-btn {
+        height: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+    .quick-action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Administration Dashboard</h2>
+            <p class="text-muted">Manage users, courses, exams, and system settings</p>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon text-primary mb-2">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="mb-1">{{ total_users }}</h3>
+                    <p class="text-muted mb-0">Total Users</p>
+                    <small class="text-success">
+                        <i class="fas fa-user-plus me-1"></i>
+                        {{ active_users }} active
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon text-info mb-2">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="mb-1">{{ total_courses }}</h3>
+                    <p class="text-muted mb-0">Courses</p>
+                    <small class="text-info">
+                        <i class="fas fa-graduation-cap me-1"></i>
+                        {{ active_courses }} active
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon text-warning mb-2">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="mb-1">{{ total_exams }}</h3>
+                    <p class="text-muted mb-0">Exams</p>
+                    <small class="text-warning">
+                        <i class="fas fa-clock me-1"></i>
+                        {{ active_exams }} active
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon text-success mb-2">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="mb-1">{{ total_submissions }}</h3>
+                    <p class="text-muted mb-0">Submissions</p>
+                    <small class="text-success">
+                        <i class="fas fa-check me-1"></i>
+                        {{ completed_submissions }} completed
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">Quick Actions</h5>
+        </div>
+        
+        <div class="col-md-2 col-sm-4 col-6 mb-3">
+            <a href="{% url 'administration:user_create' %}" class="quick-action-btn btn btn-outline-primary w-100">
+                <i class="fas fa-user-plus fa-2x mb-2"></i>
+                <span>Add User</span>
+            </a>
+        </div>
+        
+        <div class="col-md-2 col-sm-4 col-6 mb-3">
+            <a href="{% url 'administration:course_create' %}" class="quick-action-btn btn btn-outline-info w-100">
+                <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                <span>New Course</span>
+            </a>
+        </div>
+        
+        <div class="col-md-2 col-sm-4 col-6 mb-3">
+            <a href="{% url 'administration:exam_create' %}" class="quick-action-btn btn btn-outline-warning w-100">
+                <i class="fas fa-file-plus fa-2x mb-2"></i>
+                <span>New Exam</span>
+            </a>
+        </div>
+        
+        <div class="col-md-2 col-sm-4 col-6 mb-3">
+            <a href="{% url 'administration:question_create' %}" class="quick-action-btn btn btn-outline-success w-100">
+                <i class="fas fa-question-circle fa-2x mb-2"></i>
+                <span>Add Question</span>
+            </a>
+        </div>
+        
+        <div class="col-md-2 col-sm-4 col-6 mb-3">
+            <a href="{% url 'administration:assignment_create' %}" class="quick-action-btn btn btn-outline-secondary w-100">
+                <i class="fas fa-tasks fa-2x mb-2"></i>
+                <span>Assign Exam</span>
+            </a>
+        </div>
+        
+        <div class="col-md-2 col-sm-4 col-6 mb-3">
+            <a href="{% url 'administration:reports' %}" class="quick-action-btn btn btn-outline-dark w-100">
+                <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                <span>Reports</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Recent Exam Submissions
+                    </h6>
+                    <a href="{% url 'administration:reports' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_submissions %}
+                        {% for submission in recent_submissions %}
+                        <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div>
+                                <strong>{{ submission.user.get_full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ submission.exam.title }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge {% if submission.score >= 80 %}bg-success{% elif submission.score >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ submission.score|floatformat:1 }}%
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ submission.completed_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">No recent submissions</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        System Alerts
+                    </h6>
+                    <span class="badge bg-warning">{{ alerts|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if alerts %}
+                        {% for alert in alerts %}
+                        <div class="alert alert-{{ alert.type }} alert-dismissible fade show" role="alert">
+                            <strong>{{ alert.title }}</strong>
+                            <br>
+                            {{ alert.message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            All systems operational
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Management Links -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Management Sections
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="list-group">
+                                <div class="list-group-item list-group-item-action active">
+                                    <strong>User Management</strong>
+                                </div>
+                                <a href="{% url 'administration:user_list' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-users me-2"></i>View All Users
+                                </a>
+                                <a href="{% url 'administration:user_create' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-plus me-2"></i>Add New User
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="list-group">
+                                <div class="list-group-item list-group-item-action active">
+                                    <strong>Course Management</strong>
+                                </div>
+                                <a href="{% url 'administration:course_list' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-book me-2"></i>View All Courses
+                                </a>
+                                <a href="{% url 'administration:course_create' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-plus-circle me-2"></i>Create Course
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="list-group">
+                                <div class="list-group-item list-group-item-action active">
+                                    <strong>Exam Management</strong>
+                                </div>
+                                <a href="{% url 'administration:exam_list' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-file-alt me-2"></i>View All Exams
+                                </a>
+                                <a href="{% url 'administration:exam_create' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-file-plus me-2"></i>Create Exam
+                                </a>
+                                <a href="{% url 'administration:question_list' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-question-circle me-2"></i>Manage Questions
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="list-group">
+                                <div class="list-group-item list-group-item-action active">
+                                    <strong>Reports & Analytics</strong>
+                                </div>
+                                <a href="{% url 'administration:reports' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-chart-bar me-2"></i>View Reports
+                                </a>
+                                <a href="{% url 'administration:user_history' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-history me-2"></i>User History
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

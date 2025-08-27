@@ -1,0 +1,77 @@
+# Django Framework
+Django==4.2.7
+mssql-django==1.4
+pyodbc==4.0.39
+
+# Forms & UI
+django-crispy-forms==2.0
+crispy-bootstrap5==0.7
+django-widget-tweaks==1.5.0
+
+# Configuration & Environment
+django-environ==0.11.2
+python-decouple==3.8
+python-dotenv==1.0.0
+
+# CORS & Security
+django-cors-headers==4.3.1
+cryptography==41.0.7
+django-session-timeout==0.1.0
+django-ratelimit==4.1.0
+
+# Export Functionality
+openpyxl==3.1.5
+reportlab==4.4.3
+django-csp==3.7
+
+# Development & Extensions
+django-extensions==3.2.3
+django-debug-toolbar==4.2.0
+
+# File Handling
+Pillow==10.0.1
+django-storages==1.14.2
+
+# HTTP & API
+requests==2.31.0
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.0
+
+# Authentication
+django-allauth==0.57.0
+PyJWT==2.8.0
+
+# Production & Deployment
+whitenoise==6.6.0
+gunicorn==21.2.0
+sentry-sdk==1.38.0
+
+# Caching & Redis
+django-redis==5.4.0
+redis==5.0.1
+
+# Background Tasks
+celery==5.3.4
+django-celery-beat==2.5.0
+django-celery-results==2.5.0
+
+# Export & Reporting
+xlsxwriter==3.1.9
+
+# Time & Date
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+coverage==7.3.2
+factory-boy==3.3.0
+
+# Admin Interface
+django-admin-interface==0.26.0
+django-colorfield==0.10.1
+
+# Health & Monitoring
+django-health-check==3.17.0
+django-dbbackup==4.0.2

@@ -1,0 +1,226 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{% if form_user %}Edit User{% else %}Create User{% endif %} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">{% if form_user %}Edit User{% else %}Create New User{% endif %}</h4>
+                        <a href="{% url 'administration:user_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Users
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Personal Information -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Personal Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="id_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="id_name" name="name" 
+                                           value="{% if form_user %}{{ form_user.name }}{% endif %}" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid name.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_national_id" class="form-label">National ID <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="id_national_id" name="national_id" 
+                                           value="{% if form_user %}{{ form_user.national_id }}{% endif %}"
+                                           pattern="[0-9]{14}" maxlength="14" required {% if form_user %}readonly{% endif %}>
+                                    <div class="form-text">14-digit Egyptian National ID</div>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid 14-digit National ID.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_position" class="form-label">Position</label>
+                                    <input type="text" class="form-control" id="id_position" name="position" 
+                                           value="{% if form_user %}{{ form_user.position }}{% endif %}">
+                                </div>
+                            </div>
+                            
+                            <!-- Account Settings -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Account Settings</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Account Type <span class="text-danger">*</span></label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_is_staff" name="is_staff" 
+                                           {% if form_user and form_user.is_staff %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_staff">
+                                            Staff Member
+                                        </label>
+                                        <div class="form-text">Staff members have access to administrative functions</div>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_is_admin" name="is_admin" 
+                                           {% if form_user and form_user.is_admin %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_admin">
+                                            Administrator
+                                        </label>
+                                        <div class="form-text">Administrators have full system access</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_is_active" name="is_active" 
+                                           {% if not form_user or form_user.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_active">
+                                            Active Account
+                                        </label>
+                                        <div class="form-text">Inactive users cannot log in to the system</div>
+                                    </div>
+                                </div>
+                                
+                                {% if form_user %}
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_reset_password" name="reset_password">
+                                        <label class="form-check-label" for="id_reset_password">
+                                            Reset Password
+                                        </label>
+                                        <div class="form-text">Check this to reset the user's password to their National ID</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Interface Access -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Interface Access</h5>
+                                <div class="row">
+                                    {% for interface in available_interfaces %}
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                           id="interface_{{ interface.id }}" 
+                                                           name="interfaces" 
+                                                           value="{{ interface.id }}"
+                                                           {% if interface.id in user_interfaces %}checked{% endif %}>
+                                                    <label class="form-check-label" for="interface_{{ interface.id }}">
+                                                        <strong>{{ interface.name }}</strong>
+                                                    </label>
+                                                </div>
+                                                <small class="text-muted">{{ interface.description }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{% url 'administration:user_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>{% if form_user %}Update User{% else %}Create User{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                // Check password confirmation
+                var password = document.getElementById('id_password');
+                var passwordConfirm = document.getElementById('id_password_confirm');
+                
+                if (password && passwordConfirm) {
+                    if (password.value !== passwordConfirm.value) {
+                        passwordConfirm.setCustomValidity('Passwords do not match');
+                    } else {
+                        passwordConfirm.setCustomValidity('');
+                    }
+                }
+                
+                // Validate National ID format
+                var nationalId = document.getElementById('id_national_id');
+                if (nationalId && nationalId.value) {
+                    var nationalIdPattern = /^[0-9]{14}$/;
+                    if (!nationalIdPattern.test(nationalId.value)) {
+                        nationalId.setCustomValidity('National ID must be exactly 14 digits');
+                    } else {
+                        nationalId.setCustomValidity('');
+                    }
+                }
+                
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Real-time password confirmation validation
+document.addEventListener('DOMContentLoaded', function() {
+    var password = document.getElementById('id_password');
+    var passwordConfirm = document.getElementById('id_password_confirm');
+    
+    if (password && passwordConfirm) {
+        function validatePasswordMatch() {
+            if (password.value !== passwordConfirm.value) {
+                passwordConfirm.setCustomValidity('Passwords do not match');
+            } else {
+                passwordConfirm.setCustomValidity('');
+            }
+        }
+        
+        password.addEventListener('input', validatePasswordMatch);
+        passwordConfirm.addEventListener('input', validatePasswordMatch);
+    }
+    
+    // National ID formatting
+    var nationalId = document.getElementById('id_national_id');
+    if (nationalId) {
+        nationalId.addEventListener('input', function(e) {
+            // Remove non-numeric characters
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            
+            // Limit to 14 digits
+            if (e.target.value.length > 14) {
+                e.target.value = e.target.value.slice(0, 14);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

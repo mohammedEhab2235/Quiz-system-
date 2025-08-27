@@ -1,0 +1,120 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Delete Course - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Delete Course
+                        </h4>
+                        <a href="{% url 'administration:course_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Courses
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Warning!
+                        </h5>
+                        <p class="mb-0">
+                            You are about to permanently delete the course <strong>"{{ course.course_name }}"</strong>.
+                            This action cannot be undone and will also delete all associated exams and questions.
+                        </p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Course Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>Course Name:</strong></td>
+                                            <td>{{ course.course_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Course ID:</strong></td>
+                                            <td>{{ course.course_id }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Description:</strong></td>
+                                            <td>
+                                                {% if course.description %}
+                                                    {{ course.description|truncatechars:100 }}
+                                                {% else %}
+                                                    <span class="text-muted">No description</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Created:</strong></td>
+                                            <td>{{ course.created_at|date:"M d, Y H:i" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Associated Exams:</strong></td>
+                                            <td>
+                                                <span class="badge bg-warning">{{ course.exams.count }} exam(s)</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Confirm Deletion</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-danger">
+                                        <strong>This action will permanently delete:</strong>
+                                    </p>
+                                    <ul class="text-danger">
+                                        <li>The course "{{ course.course_name }}"</li>
+                                        <li>{{ course.exams.count }} associated exam(s)</li>
+                                        <li>All questions within those exams</li>
+                                        <li>All student exam records and results</li>
+                                    </ul>
+                                    
+                                    <form method="post" class="mt-4">
+                                        {% csrf_token %}
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="fas fa-trash me-2"></i>Yes, Delete Course
+                                            </button>
+                                            <a href="{% url 'administration:course_list' %}" class="btn btn-outline-secondary">
+                                                <i class="fas fa-times me-2"></i>Cancel
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add confirmation dialog for extra safety
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!confirm('Are you absolutely sure you want to delete this course? This action cannot be undone.')) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

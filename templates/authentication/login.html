@@ -1,0 +1,95 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Login" %} - {% trans "Quiz System" %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        {% trans "Login" %}
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.national_id.id_for_label }}" class="form-label">
+                                <i class="fas fa-id-card me-1"></i>
+                                {% trans "National ID" %}
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.national_id.errors %}is-invalid{% endif %}" 
+                                   id="{{ form.national_id.id_for_label }}"
+                                   name="{{ form.national_id.name }}"
+                                   value="{{ form.national_id.value|default:'' }}"
+                                   placeholder="{% trans 'Enter your 14-digit National ID' %}"
+                                   maxlength="14"
+                                   pattern="[0-9]{14}"
+                                   required>
+                            {% if form.national_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.national_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                {% trans "Enter your 14-digit National ID number" %}
+                            </div>
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                {% trans "Login" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>
+                        <i class="fas fa-shield-alt me-1"></i>
+                        {% trans "Secure authentication via National ID" %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-format National ID input
+document.addEventListener('DOMContentLoaded', function() {
+    const nationalIdInput = document.getElementById('{{ form.national_id.id_for_label }}');
+    
+    nationalIdInput.addEventListener('input', function(e) {
+        // Remove any non-digit characters
+        let value = e.target.value.replace(/\D/g, '');
+        
+        // Limit to 14 digits
+        if (value.length > 14) {
+            value = value.substring(0, 14);
+        }
+        
+        e.target.value = value;
+    });
+    
+    // Focus on the input field when page loads
+    nationalIdInput.focus();
+});
+</script>
+{% endblock %}

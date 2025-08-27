@@ -1,0 +1,217 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Assignment Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assignment-card {
+        transition: transform 0.2s;
+    }
+    .assignment-card:hover {
+        transform: translateY(-2px);
+    }
+    .status-badge {
+        font-size: 0.8rem;
+    }
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-tasks me-2 text-primary"></i>
+                        Assignment Management
+                    </h2>
+                    <p class="text-muted mb-0">Manage exam assignments and track progress</p>
+                </div>
+                <a href="{% url 'administration:assignment_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>New Assignment
+                </a>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-section">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search_query }}" placeholder="Search by user or exam...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="exam" class="form-label">Filter by Exam</label>
+                        <select class="form-select" id="exam" name="exam">
+                            <option value="">All Exams</option>
+                            {% for exam in exams %}
+                                <option value="{{ exam.exam_id }}" {% if exam.exam_id|stringformat:"s" == exam_id %}selected{% endif %}>
+                                    {{ exam.exam_title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Filter by Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Status</option>
+                            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <a href="{% url 'administration:assignment_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Assignment List -->
+            {% if page_obj %}
+                <div class="row">
+                    {% for assignment in page_obj %}
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="card assignment-card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-file-alt me-2 text-primary"></i>
+                                            {{ assignment.exam.exam_title }}
+                                        </h6>
+                                        {% if assignment.assignment_status == 'completed' %}
+                                    <span class="badge bg-success status-badge">Completed</span>
+                                {% else %}
+                                    <span class="badge bg-warning status-badge">Pending</span>
+                                {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-user me-2"></i>
+                                            <strong>Student:</strong> {{ assignment.user.name }}
+                                        </p>
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-id-card me-2"></i>
+                                            <strong>ID:</strong> {{ assignment.user.national_id }}
+                                        </p>
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-book me-2"></i>
+                                            <strong>Course:</strong> {{ assignment.exam.course.name }}
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            Assigned: {{ assignment.assigned_date|date:"M d, Y" }}
+                                        </small>
+                                        {% if assignment.due_date %}
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Due: {{ assignment.due_date|date:"M d, Y H:i" }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            Attempts: {{ assignment.attempts_allowed|default:"Unlimited" }}
+                                        </small>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'administration:user_exam_detail' assignment.user_exam_id %}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Assignment pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if exam_id %}&exam={{ exam_id }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if exam_id %}&exam={{ exam_id }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if exam_id %}&exam={{ exam_id }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if exam_id %}&exam={{ exam_id }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if exam_id %}&exam={{ exam_id }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Assignments Found</h4>
+                    <p class="text-muted">No exam assignments match your current filters.</p>
+                    <a href="{% url 'administration:assignment_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create First Assignment
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit form on filter change
+    document.getElementById('exam').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    document.getElementById('status').addEventListener('change', function() {
+        this.form.submit();
+    });
+</script>
+{% endblock %}

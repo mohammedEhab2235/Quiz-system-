@@ -1,0 +1,480 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{% if question %}Edit Question{% else %}Create Question{% endif %} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">{% if question %}Edit Question{% else %}Create New Question{% endif %}</h4>
+                            {% if exam %}
+                                <small class="text-muted">{{ exam.exam_title }} - {{ exam.course.course_name }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'administration:question_list' %}{% if exam %}?exam={{ exam.exam_id }}{% endif %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Questions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Form -->
+            <form method="post" id="questionForm">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- Basic Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Question Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="exam" class="form-label">Exam *</label>
+                                            <select class="form-select" id="exam" name="exam" required>
+                                                <option value="">Select Exam</option>
+                                                {% for exam_option in exams %}
+                                                    <option value="{{ exam_option.exam_id }}" 
+                                                            {% if question and exam_option.exam_id == question.exam.exam_id %}selected{% endif %}>
+                                                        {{ exam_option.exam_title }} - {{ exam_option.course.course_name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            {% if form.exam.errors %}
+                                                <div class="text-danger small">{{ form.exam.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="question_type" class="form-label">Question Type *</label>
+                                            <select class="form-select" id="question_type" name="question_type" required onchange="toggleQuestionOptions()">
+                                                <option value="">Select Type</option>
+                                                <option value="multiple_choice" {% if question and question.question_type == 'multiple_choice' %}selected{% endif %}>Multiple Choice</option>
+                                                <option value="true_false" {% if question and question.question_type == 'true_false' %}selected{% endif %}>True/False</option>
+                                                <option value="short_answer" {% if question and question.question_type == 'short_answer' %}selected{% endif %}>Short Answer</option>
+                                                <option value="essay" {% if question and question.question_type == 'essay' %}selected{% endif %}>Essay</option>
+                                            </select>
+                                            {% if form.question_type.errors %}
+                                                <div class="text-danger small">{{ form.question_type.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="points" class="form-label">Points *</label>
+                                            <input type="number" class="form-control" id="points" name="points" 
+                                                   value="{% if question %}{{ question.points }}{% else %}1{% endif %}" 
+                                                   min="0.1" step="0.5" required placeholder="1.0">
+                                            {% if form.points.errors %}
+                                                <div class="text-danger small">{{ form.points.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="question_text" class="form-label">Question Text *</label>
+                                    <textarea class="form-control" id="question_text" name="question_text" 
+                                              rows="4" required placeholder="Enter your question here...">{% if question %}{{ question.question_text }}{% endif %}</textarea>
+                                    {% if form.question_text.errors %}
+                                        <div class="text-danger small">{{ form.question_text.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Multiple Choice Options -->
+                        <div class="card mb-4" id="multipleChoiceOptions" style="display: none;">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Answer Options</h5>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOption()">
+                                        <i class="fas fa-plus me-1"></i>Add Option
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="optionsContainer">
+                                    <!-- Options will be dynamically added here -->
+                                </div>
+                                <small class="text-muted">Select the correct answer by checking the radio button next to it.</small>
+                            </div>
+                        </div>
+
+                        <!-- True/False Options -->
+                        <div class="card mb-4" id="trueFalseOptions" style="display: none;">
+                            <div class="card-header">
+                                <h5 class="mb-0">Correct Answer</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="correct_answer" id="answerTrue" value="True" 
+                                           {% if question and question.correct_answer == 'True' %}checked{% endif %}>
+                                    <label class="form-check-label" for="answerTrue">
+                                        <i class="fas fa-check text-success me-1"></i>True
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="correct_answer" id="answerFalse" value="False" 
+                                           {% if question and question.correct_answer == 'False' %}checked{% endif %}>
+                                    <label class="form-check-label" for="answerFalse">
+                                        <i class="fas fa-times text-danger me-1"></i>False
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Short Answer/Essay Options -->
+                        <div class="card mb-4" id="textAnswerOptions" style="display: none;">
+                            <div class="card-header">
+                                <h5 class="mb-0">Answer Guidelines</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="correct_answer_text" class="form-label">Sample/Expected Answer</label>
+                                    <textarea class="form-control" id="correct_answer_text" name="correct_answer" 
+                                              rows="3" placeholder="Provide a sample answer or grading guidelines...">{% if question %}{{ question.correct_answer }}{% endif %}</textarea>
+                                    <small class="text-muted">This will help with grading and provide guidance for manual review.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- Question Preview -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Preview</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="questionPreview">
+                                    <p class="text-muted text-center py-3">
+                                        <i class="fas fa-eye fa-2x mb-2"></i><br>
+                                        Fill in the question details to see a preview
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Question Statistics (Edit Mode) -->
+                        {% if question %}
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Question Statistics</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="border-end">
+                                            <h4 class="text-primary mb-0">{{ question.usage_count|default:0 }}</h4>
+                                            <small class="text-muted">Times Used</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <h4 class="text-success mb-0">{{ question.avg_score|default:0|floatformat:1 }}%</h4>
+                                        <small class="text-muted">Avg Score</small>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="small text-muted">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Created:</span>
+                                        <span>{{ question.created_at|date:"M d, Y" }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Last Modified:</span>
+                                        <span>{{ question.updated_at|date:"M d, Y" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Actions -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>{% if question %}Update Question{% else %}Create Question{% endif %}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="updatePreview()">
+                                        <i class="fas fa-eye me-2"></i>Update Preview
+                                    </button>
+                                    {% if question %}
+                                    <a href="{% url 'administration:question_list' %}?exam={{ question.exam.id }}" class="btn btn-outline-info">
+                                        <i class="fas fa-list me-2"></i>Back to Questions
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if question and question.question_type == 'multiple_choice' %}
+<script id="existing-options-data" type="application/json">
+[
+    {% if question.option_a %}
+    {
+        "text": "{{ question.option_a|escapejs }}",
+        "is_correct": {% if question.correct_answer == 'A' %}true{% else %}false{% endif %}
+    }{% if question.option_b or question.option_c or question.option_d %},{% endif %}
+    {% endif %}
+    {% if question.option_b %}
+    {
+        "text": "{{ question.option_b|escapejs }}",
+        "is_correct": {% if question.correct_answer == 'B' %}true{% else %}false{% endif %}
+    }{% if question.option_c or question.option_d %},{% endif %}
+    {% endif %}
+    {% if question.option_c %}
+    {
+        "text": "{{ question.option_c|escapejs }}",
+        "is_correct": {% if question.correct_answer == 'C' %}true{% else %}false{% endif %}
+    }{% if question.option_d %},{% endif %}
+    {% endif %}
+    {% if question.option_d %}
+    {
+        "text": "{{ question.option_d|escapejs }}",
+        "is_correct": {% if question.correct_answer == 'D' %}true{% else %}false{% endif %}
+    }
+    {% endif %}
+]
+</script>
+{% endif %}
+
+<script>
+let optionCount = 0;
+
+// Initialize form based on question type
+document.addEventListener('DOMContentLoaded', function() {
+    toggleQuestionOptions();
+    
+    // Load existing options for multiple choice questions
+    const existingOptions = document.getElementById('existing-options-data');
+    if (existingOptions) {
+        const options = JSON.parse(existingOptions.textContent);
+        options.forEach(option => {
+            addOption(option.text, option.is_correct);
+        });
+    }
+    
+    updatePreview();
+});
+
+function toggleQuestionOptions() {
+    const questionType = document.getElementById('question_type').value;
+    
+    // Hide all option containers
+    document.getElementById('multipleChoiceOptions').style.display = 'none';
+    document.getElementById('trueFalseOptions').style.display = 'none';
+    document.getElementById('textAnswerOptions').style.display = 'none';
+    
+    // Show relevant container
+    if (questionType === 'multiple_choice') {
+        document.getElementById('multipleChoiceOptions').style.display = 'block';
+        if (optionCount === 0) {
+            addOption();
+            addOption();
+        }
+    } else if (questionType === 'true_false') {
+        document.getElementById('trueFalseOptions').style.display = 'block';
+    } else if (questionType === 'short_answer' || questionType === 'essay') {
+        document.getElementById('textAnswerOptions').style.display = 'block';
+    }
+    
+    updatePreview();
+}
+
+function addOption(text = '', isCorrect = false) {
+    const container = document.getElementById('optionsContainer');
+    const existingOptions = container.querySelectorAll('.option-item').length;
+    
+    if (existingOptions >= 4) {
+        alert('Maximum 4 options allowed.');
+        return;
+    }
+    
+    const optionLabels = ['A', 'B', 'C', 'D'];
+    const optionLabel = optionLabels[existingOptions];
+    
+    const optionDiv = document.createElement('div');
+    optionDiv.className = 'mb-3 option-item';
+    optionDiv.innerHTML = `
+        <div class="input-group">
+            <div class="input-group-text">
+                <input class="form-check-input mt-0" type="radio" name="correct_answer" value="${optionLabel}" ${isCorrect ? 'checked' : ''}>
+            </div>
+            <span class="input-group-text">${optionLabel}:</span>
+            <input type="text" class="form-control" name="option_${optionLabel.toLowerCase()}" placeholder="Option ${optionLabel}" value="${text}" required>
+            <button class="btn btn-outline-danger" type="button" onclick="removeOption(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(optionDiv);
+    updatePreview();
+}
+
+function removeOption(button) {
+    if (document.querySelectorAll('.option-item').length > 2) {
+        button.closest('.option-item').remove();
+        updatePreview();
+    } else {
+        alert('A multiple choice question must have at least 2 options.');
+    }
+}
+
+function updatePreview() {
+    const questionTextElement = document.getElementById('question_text');
+    const questionTypeElement = document.getElementById('question_type');
+    const pointsElement = document.getElementById('points');
+    
+    const questionText = questionTextElement ? questionTextElement.value : '';
+    const questionType = questionTypeElement ? questionTypeElement.value : '';
+    const points = pointsElement ? pointsElement.value : '1';
+    
+    let previewHtml = '';
+    
+    if (questionText) {
+        previewHtml += `<div class="mb-3">`;
+        previewHtml += `<div class="d-flex justify-content-between align-items-start mb-2">`;
+        previewHtml += `<h6 class="mb-0">Question Preview</h6>`;
+        previewHtml += `<span class="badge bg-primary">${points || 1} pts</span>`;
+        previewHtml += `</div>`;
+        previewHtml += `<p class="mb-3">${questionText}</p>`;
+        
+        if (questionType === 'multiple_choice') {
+            const options = document.querySelectorAll('[name^="option_"]');
+            const correctAnswer = document.querySelector('[name="correct_answer"]:checked');
+            if (options.length > 0) {
+                previewHtml += `<div class="ms-3">`;
+                const optionLabels = ['A', 'B', 'C', 'D'];
+                options.forEach((option, index) => {
+                    if (option.value) {
+                        const label = optionLabels[index] || (index + 1);
+                        const isCorrect = correctAnswer && correctAnswer.value === label;
+                        const correctClass = isCorrect ? ' text-success fw-bold' : '';
+                        const correctIcon = isCorrect ? ' <i class="fas fa-check text-success"></i>' : '';
+                        previewHtml += `<div class="form-check mb-2">`;
+                        previewHtml += `<input class="form-check-input" type="radio" disabled>`;
+                        previewHtml += `<label class="form-check-label${correctClass}">${label}. ${option.value}${correctIcon}</label>`;
+                        previewHtml += `</div>`;
+                    }
+                });
+                previewHtml += `</div>`;
+            }
+        } else if (questionType === 'true_false') {
+            const correctAnswer = document.querySelector('[name="correct_answer"]:checked');
+            const correctValue = correctAnswer ? correctAnswer.value : null;
+            previewHtml += `<div class="ms-3">`;
+            previewHtml += `<div class="form-check form-check-inline">`;
+            previewHtml += `<input class="form-check-input" type="radio" disabled>`;
+            const trueClass = correctValue === 'True' ? ' text-success fw-bold' : '';
+            const trueIcon = correctValue === 'True' ? ' <i class="fas fa-check text-success"></i>' : '';
+            previewHtml += `<label class="form-check-label${trueClass}">True${trueIcon}</label>`;
+            previewHtml += `</div>`;
+            previewHtml += `<div class="form-check form-check-inline">`;
+            previewHtml += `<input class="form-check-input" type="radio" disabled>`;
+            const falseClass = correctValue === 'False' ? ' text-success fw-bold' : '';
+            const falseIcon = correctValue === 'False' ? ' <i class="fas fa-check text-success"></i>' : '';
+            previewHtml += `<label class="form-check-label${falseClass}">False${falseIcon}</label>`;
+            previewHtml += `</div>`;
+            previewHtml += `</div>`;
+        } else if (questionType === 'short_answer') {
+            previewHtml += `<input type="text" class="form-control" placeholder="Student answer..." disabled>`;
+        } else if (questionType === 'essay') {
+            previewHtml += `<textarea class="form-control" rows="4" placeholder="Student essay answer..." disabled></textarea>`;
+        }
+        
+        previewHtml += `</div>`;
+    } else {
+        previewHtml = `<p class="text-muted text-center py-3">`;
+        previewHtml += `<i class="fas fa-eye fa-2x mb-2"></i><br>`;
+        previewHtml += `Fill in the question details to see a preview`;
+        previewHtml += `</p>`;
+    }
+    
+    document.getElementById('questionPreview').innerHTML = previewHtml;
+}
+
+// Update preview when form fields change
+const questionTextElement = document.getElementById('question_text');
+const pointsElement = document.getElementById('points');
+
+if (questionTextElement) {
+    questionTextElement.addEventListener('input', updatePreview);
+}
+if (pointsElement) {
+    pointsElement.addEventListener('input', updatePreview);
+}
+
+// Update preview when correct answers are selected
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'correct_answer' || e.target.name.startsWith('option_')) {
+        updatePreview();
+    }
+});
+
+// Form validation
+const questionForm = document.getElementById('questionForm');
+if (questionForm) {
+    questionForm.addEventListener('submit', function(e) {
+    const questionType = document.getElementById('question_type').value;
+    
+    if (questionType === 'multiple_choice') {
+        const options = document.querySelectorAll('[name^="option_"]');
+        const correctOption = document.querySelector('[name="correct_answer"]:checked');
+        
+        if (options.length < 2) {
+            e.preventDefault();
+            alert('Multiple choice questions must have at least 2 options.');
+            return;
+        }
+        
+        if (!correctOption) {
+            e.preventDefault();
+            alert('Please select the correct answer for the multiple choice question.');
+            return;
+        }
+        
+        // Check if all options have text
+        let emptyOptions = false;
+        options.forEach(option => {
+            if (!option.value.trim()) {
+                emptyOptions = true;
+            }
+        });
+        
+        if (emptyOptions) {
+            e.preventDefault();
+            alert('All options must have text.');
+            return;
+        }
+    } else if (questionType === 'true_false') {
+        const correctAnswer = document.querySelector('[name="correct_answer"]:checked');
+        if (!correctAnswer) {
+            e.preventDefault();
+            alert('Please select the correct answer (True or False).');
+            return;
+        }
+    }
+    });
+}
+</script>
+{% endblock %}

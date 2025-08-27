@@ -1,0 +1,281 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}User History - {{ user.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- User Info Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">User History</h4>
+                        <a href="{% url 'administration:user_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Users
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-lg me-3">
+                                    <div class="avatar-title bg-primary rounded-circle">
+                                        {{ user.name|first }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">{{ user.name }}</h5>
+                                    <p class="text-muted mb-0">{{ user.national_id }}</p>
+                                    <small class="text-muted">{{ user.position }} - {{ user.get_account_type_display }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h4 class="text-primary mb-1">{{ user_stats.total_exams }}</h4>
+                                        <p class="text-muted mb-0">Total Exams</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h4 class="text-success mb-1">{{ user_stats.completed_exams }}</h4>
+                                        <p class="text-muted mb-0">Completed</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <h4 class="text-info mb-1">{{ user_stats.avg_score|floatformat:1 }}%</h4>
+                                    <p class="text-muted mb-0">Avg Score</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Activity Timeline</h5>
+                </div>
+                <div class="card-body">
+                    {% if history_entries %}
+                        <div class="timeline">
+                            {% for entry in history_entries %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-{% if entry.action == 'login' %}success{% elif entry.action == 'exam_start' %}primary{% elif entry.action == 'exam_complete' %}info{% elif entry.action == 'exam_submit' %}warning{% else %}secondary{% endif %}"></div>
+                                    <div class="timeline-content">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">
+                                                    {% if entry.action == 'login' %}
+                                                        <i class="fas fa-sign-in-alt me-2"></i>User Login
+                                                    {% elif entry.action == 'exam_start' %}
+                                                        <i class="fas fa-play me-2"></i>Started Exam
+                                                    {% elif entry.action == 'exam_complete' %}
+                                                        <i class="fas fa-check me-2"></i>Completed Exam
+                                                    {% elif entry.action == 'exam_submit' %}
+                                                        <i class="fas fa-paper-plane me-2"></i>Submitted Exam
+                                                    {% else %}
+                                                        <i class="fas fa-info me-2"></i>{{ entry.get_action_display }}
+                                                    {% endif %}
+                                                </h6>
+                                                <p class="text-muted mb-1">{{ entry.description }}</p>
+                                                {% if entry.details %}
+                                                    <small class="text-muted">{{ entry.details }}</small>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ entry.timestamp|date:"M d, Y H:i" }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Activity Found</h5>
+                            <p class="text-muted">This user has no recorded activity yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Exam History -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Exam History</h5>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'administration:export_user_history_excel' user.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-file-excel me-2"></i>Export Excel
+                            </a>
+                            <a href="{% url 'administration:export_user_history_pdf' user.id %}" class="btn btn-danger btn-sm">
+                                <i class="fas fa-file-pdf me-2"></i>Export PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if user_exams %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Exam</th>
+                                        <th>Course</th>
+                                        <th>Status</th>
+                                        <th>Score</th>
+                                        <th>Attempts</th>
+                                        <th>Last Attempt</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_exam in user_exams %}
+                                    <tr>
+                                        <td>
+                                            <h6 class="mb-1">{{ user_exam.exam.title }}</h6>
+                                            <small class="text-muted">{{ user_exam.exam.duration }} minutes</small>
+                                        </td>
+                                        <td>{{ user_exam.exam.course.name }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if user_exam.status == 'completed' %}success{% elif user_exam.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                                {{ user_exam.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if user_exam.score is not None %}
+                                                <span class="badge bg-{% if user_exam.score >= 70 %}success{% elif user_exam.score >= 50 %}warning{% else %}danger{% endif %}">
+                                                    {{ user_exam.score|floatformat:1 }}%
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ user_exam.attempt_count }}</span>
+                                        </td>
+                                        <td>
+                                            {% if user_exam.submitted_at %}
+                                                {{ user_exam.submitted_at|date:"M d, Y H:i" }}
+                                            {% elif user_exam.started_at %}
+                                                {{ user_exam.started_at|date:"M d, Y H:i" }}
+                                            {% else %}
+                                                <span class="text-muted">Not started</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                {% if user_exam.status == 'completed' %}
+                                                    <a href="{% url 'exams:exam_results' user_exam.id %}" class="btn btn-outline-info" title="View Results">
+                                                        <i class="fas fa-chart-bar"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <button class="btn btn-outline-secondary" title="Reset Exam" onclick="confirmReset('{{ user_exam.id }}');">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No exams assigned to this user.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    height: 4rem;
+    width: 4rem;
+}
+
+.avatar-title {
+    align-items: center;
+    display: flex;
+    font-size: 1.5rem;
+    font-weight: 500;
+    height: 100%;
+    justify-content: center;
+    width: 100%;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    border-left: 3px solid #dee2e6;
+}
+</style>
+
+<script>
+function confirmReset(userExamId) {
+    if (confirm('Are you sure you want to reset this exam? This will delete all previous attempts and scores.')) {
+        // Add AJAX call to reset exam
+        fetch(`/administration/reset-exam/${userExamId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error resetting exam: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error resetting exam: ' + error);
+        });
+    }
+}
+</script>
+{% endblock %}

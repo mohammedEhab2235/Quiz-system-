@@ -1,0 +1,111 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ exam.title }} - Quiz System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ exam.title }}</h4>
+                    <small class="text-muted">{{ exam.course.name }}</small>
+                </div>
+                <div class="card-body">
+                    {% if exam.description %}
+                    <div class="mb-4">
+                        <h6>Description:</h6>
+                        <p class="text-muted">{{ exam.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Exam Details:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-clock me-2 text-primary"></i>Duration: {{ exam.duration }} minutes</li>
+                                <li><i class="fas fa-question-circle me-2 text-info"></i>Questions: {{ exam.questions.count }}</li>
+                                <li><i class="fas fa-star me-2 text-warning"></i>Total Points: {{ total_points }}</li>
+                                {% if exam.passing_score %}
+                                <li><i class="fas fa-check-circle me-2 text-success"></i>Passing Score: {{ exam.passing_score }}%</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Instructions:</h6>
+                            <ul class="list-unstyled text-muted">
+                                <li><i class="fas fa-info-circle me-2"></i>Read each question carefully</li>
+                                <li><i class="fas fa-save me-2"></i>Your answers are auto-saved</li>
+                                <li><i class="fas fa-exclamation-triangle me-2"></i>You cannot pause the timer</li>
+                                <li><i class="fas fa-ban me-2"></i>Do not refresh or close the browser</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    {% if not exam.is_available %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        This exam is not currently available. 
+                        {% if exam.start_time > now %}
+                            It will be available from {{ exam.start_time|date:"M d, Y H:i" }}.
+                        {% elif exam.end_time < now %}
+                            The exam period ended on {{ exam.end_time|date:"M d, Y H:i" }}.
+                        {% endif %}
+                    </div>
+                    {% elif existing_session %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You have an existing exam session. You can continue from where you left off.
+                        <br><small class="text-muted">Started: {{ existing_session.start_time|date:"M d, Y H:i" }}</small>
+                    </div>
+                    {% elif user_exam and user_exam.status == 'completed' %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        You have already completed this exam with a score of {{ user_exam.score|floatformat:1 }}%.
+                        {% if not exam.allow_retake %}
+                            <br><small class="text-muted">Retakes are not allowed for this exam.</small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center">
+                        {% if exam.is_available %}
+                            {% if not user_exam or user_exam.status != 'completed' or exam.allow_retake %}
+                            <form method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-play me-2"></i>
+                                    {% if existing_session %}
+                                        Continue Exam
+                                    {% elif user_exam and user_exam.status == 'completed' %}
+                                        Retake Exam
+                                    {% else %}
+                                        Start Exam
+                                    {% endif %}
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if user_exam and user_exam.status == 'completed' %}
+                        <div class="mt-3">
+                            <a href="{% url 'exams:exam_results' user_exam.id %}" class="btn btn-outline-info">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                View Results
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-3">
+                            <a href="{% url 'authentication:dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

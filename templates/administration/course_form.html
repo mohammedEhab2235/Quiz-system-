@@ -1,0 +1,326 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% if course %}{% trans "Edit Course" %}{% else %}{% trans "Create Course" %}{% endif %} - {% trans "Admin" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">{% if course %}{% trans "Edit Course" %}{% else %}{% trans "Create New Course" %}{% endif %}</h4>
+                        <a href="{% url 'administration:course_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Courses" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Course Information -->
+                            <div class="col-md-8">
+                                <h5 class="mb-3">{% trans "Course Information" %}</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="id_name" class="form-label">{% trans "Course Name" %} <span class="text-danger">*</span></label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="id_name" name="name" 
+                                               value="{% if course %}{{ course.course_name }}{% endif %}" 
+                                               placeholder="{% trans 'Type to search or enter new course name...' %}" 
+                                               autocomplete="off" required>
+                                        <div id="course-suggestions" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;"></div>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        {% trans "Please provide a course name." %}
+                                    </div>
+                                    <div class="form-text">{% trans "Start typing to see suggestions from existing courses" %}</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_description" class="form-label">{% trans "Description" %}</label>
+                                    <textarea class="form-control" id="id_description" name="description" rows="4" 
+                                              placeholder="{% trans 'Enter course description...' %}">{% if course %}{{ course.description }}{% endif %}</textarea>
+                                    <div class="form-text">{% trans "Provide a detailed description of the course content and objectives" %}</div>
+                                </div>
+                                
+                                <!-- Course Code field removed - not in model
+                                <div class="mb-3">
+                                    <label for="id_code" class="form-label">Course Code</label>
+                                    <input type="text" class="form-control" id="id_code" name="code" 
+                                           value="{% if course %}{{ course.code }}{% endif %}" 
+                                           placeholder="e.g., CS101, MATH201">
+                                    <div class="form-text">Optional course identifier or code</div>
+                                </div>
+                                -->
+                            </div>
+                            
+                            <!-- Course Settings -->
+                            <div class="col-md-4">
+                                <h5 class="mb-3">{% trans "Settings" %}</h5>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_is_active" name="is_active" 
+                                               {% if not course or course.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_active">
+                                            {% trans "Active Course" %}
+                                        </label>
+                                        <div class="form-text">{% trans "Inactive courses are hidden from students" %}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_max_students" class="form-label">{% trans "Maximum Students" %}</label>
+                                    <input type="number" class="form-control" id="id_max_students" name="max_students" 
+                                           value="{% if course %}{{ course.max_students }}{% endif %}" 
+                                           min="1" placeholder="{% trans 'No limit' %}">
+                                    <div class="form-text">{% trans "Leave empty for unlimited enrollment" %}</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_start_date" class="form-label">{% trans "Start Date" %}</label>
+                                    <input type="date" class="form-control" id="id_start_date" name="start_date" 
+                                           value="{% if course and course.start_date %}{{ course.start_date|date:'Y-m-d' }}{% endif %}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_end_date" class="form-label">{% trans "End Date" %}</label>
+                                    <input type="date" class="form-control" id="id_end_date" name="end_date" 
+                                           value="{% if course and course.end_date %}{{ course.end_date|date:'Y-m-d' }}{% endif %}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Prerequisites -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">{% trans "Prerequisites" %}</h5>
+                                <div class="mb-3">
+                                    <label for="id_prerequisites" class="form-label">{% trans "Required Courses" %}</label>
+                                    <select class="form-select" id="id_prerequisites" name="prerequisites" multiple>
+                                        {% for prereq_course in available_courses %}
+                                            {% if prereq_course != course %}
+                                                <option value="{{ prereq_course.id }}" 
+                                                        {% if prereq_course in course.prerequisites.all %}selected{% endif %}>
+                                                    {{ prereq_course.name }} ({{ prereq_course.code }})
+                                                </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{% trans "Hold Ctrl/Cmd to select multiple courses" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Course Statistics (Edit Mode Only) -->
+                        {% if course %}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">{% trans "Course Statistics" %}</h5>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h4 class="text-primary mb-1">{{ course.exams.count }}</h4>
+                                                <p class="text-muted mb-0">{% trans "Total Exams" %}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h4 class="text-success mb-1">{{ enrolled_students }}</h4>
+                                                <p class="text-muted mb-0">{% trans "Enrolled Students" %}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h4 class="text-info mb-1">{{ active_exams }}</h4>
+                                                <p class="text-muted mb-0">{% trans "Active Exams" %}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h4 class="text-warning mb-1">{{ avg_completion_rate|floatformat:1 }}%</h4>
+                                                <p class="text-muted mb-0">{% trans "Completion Rate" %}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{% url 'administration:course_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>{% trans "Cancel" %}
+                                    </a>
+                                    {% if course %}
+                                        <a href="{% url 'administration:exam_list' %}?course={{ course.id }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-list me-2"></i>{% trans "View Exams" %}
+                                        </a>
+                                    {% endif %}
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>{% if course %}{% trans "Update Course" %}{% else %}{% trans "Create Course" %}{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                // Validate date range
+                var startDate = document.getElementById('id_start_date');
+                var endDate = document.getElementById('id_end_date');
+                
+                if (startDate.value && endDate.value) {
+                    if (new Date(startDate.value) >= new Date(endDate.value)) {
+                        endDate.setCustomValidity('End date must be after start date');
+                    } else {
+                        endDate.setCustomValidity('');
+                    }
+                }
+                
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Date validation
+document.addEventListener('DOMContentLoaded', function() {
+    var startDate = document.getElementById('id_start_date');
+    var endDate = document.getElementById('id_end_date');
+    
+    function validateDateRange() {
+        if (startDate.value && endDate.value) {
+            if (new Date(startDate.value) >= new Date(endDate.value)) {
+                endDate.setCustomValidity('End date must be after start date');
+            } else {
+                endDate.setCustomValidity('');
+            }
+        }
+    }
+    
+    if (startDate && endDate) {
+        startDate.addEventListener('change', validateDateRange);
+        endDate.addEventListener('change', validateDateRange);
+    }
+    
+    // Course name autocomplete functionality
+    const courseNameInput = document.getElementById('id_name');
+    const suggestionsContainer = document.getElementById('course-suggestions');
+    let debounceTimer;
+    
+    if (courseNameInput && suggestionsContainer) {
+        courseNameInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                hideSuggestions();
+                return;
+            }
+            
+            debounceTimer = setTimeout(() => {
+                fetchSuggestions(query);
+            }, 300);
+        });
+        
+        courseNameInput.addEventListener('focus', function() {
+            const query = this.value.trim();
+            if (query.length >= 2) {
+                fetchSuggestions(query);
+            }
+        });
+        
+        courseNameInput.addEventListener('blur', function() {
+            // Delay hiding to allow clicking on suggestions
+            setTimeout(() => {
+                hideSuggestions();
+            }, 200);
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (!courseNameInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                hideSuggestions();
+            }
+        });
+    }
+    
+    function fetchSuggestions(query) {
+        fetch(`{% url 'administration:course_suggestions_api' %}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                displaySuggestions(data.suggestions);
+            })
+            .catch(error => {
+                console.error('Error fetching suggestions:', error);
+                hideSuggestions();
+            });
+    }
+    
+    function displaySuggestions(suggestions) {
+        suggestionsContainer.innerHTML = '';
+        
+        if (suggestions.length === 0) {
+            hideSuggestions();
+            return;
+        }
+        
+        suggestions.forEach(suggestion => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'dropdown-item';
+            item.textContent = suggestion;
+            item.addEventListener('click', function() {
+                courseNameInput.value = suggestion;
+                hideSuggestions();
+                courseNameInput.focus();
+            });
+            suggestionsContainer.appendChild(item);
+        });
+        
+        showSuggestions();
+    }
+    
+    function showSuggestions() {
+        suggestionsContainer.style.display = 'block';
+        suggestionsContainer.classList.add('show');
+    }
+    
+    function hideSuggestions() {
+        suggestionsContainer.style.display = 'none';
+        suggestionsContainer.classList.remove('show');
+    }
+});
+</script>
+{% endblock %}

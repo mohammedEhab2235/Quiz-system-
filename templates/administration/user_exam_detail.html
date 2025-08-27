@@ -1,0 +1,446 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Exam Details - {{ user_exam.user.name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">Exam Details</h4>
+                            <small class="text-muted">{{ user_exam.exam.exam_title }} - {{ user_exam.user.name }}</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'administration:exam_results' user_exam.exam.exam_id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Results
+                        </a>
+                            <button class="btn btn-outline-primary" onclick="printResults()">
+                                <i class="fas fa-print me-2"></i>Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Student Information -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Student Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                            <h4 class="mb-0">{{ user_exam.user.name|first }}</h4>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-0">{{ user_exam.user.name }}</h5>
+                                            <p class="text-muted mb-0">{{ user_exam.user.national_id }}</p>
+                                            <small class="text-muted">{{ user_exam.user.position }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <h4 class="text-primary mb-0">{{ user_exam.attempt_number }}</h4>
+                                            <small class="text-muted">Attempt #</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <h4 class="text-info mb-0">{{ user_exam.time_taken|default:0|floatformat:0 }}</h4>
+                                            <small class="text-muted">Minutes</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exam Overview -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Exam Overview</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h3 class="text-primary mb-0">{{ user_exam.score|default:0|floatformat:1 }}%</h3>
+                                        <small class="text-muted">Final Score</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h3 class="{% if user_exam.score >= user_exam.exam.passing_score %}text-success{% else %}text-danger{% endif %} mb-0">
+                                            {% if user_exam.score >= user_exam.exam.passing_score %}PASS{% else %}FAIL{% endif %}
+                                        </h3>
+                                        <small class="text-muted">Result</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h3 class="text-info mb-0">{{ correct_answers }}/{{ total_questions }}</h3>
+                                        <small class="text-muted">Correct</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h3 class="text-warning mb-0">{{ total_points_earned }}/{{ total_points }}</h3>
+                                        <small class="text-muted">Points</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Started:</small>
+                                    <p class="mb-0">{{ user_exam.started_at|date:"M d, Y H:i" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Completed:</small>
+                                    <p class="mb-0">{{ user_exam.completed_at|date:"M d, Y H:i"|default:"Not completed" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question-by-Question Analysis -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Question Analysis</h5>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="showAll()">
+                                        Show All
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" onclick="showCorrect()">
+                                        Correct Only
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" onclick="showIncorrect()">
+                                        Incorrect Only
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% for session_question in session_questions %}
+                            <div class="question-item mb-4 p-3 border rounded" data-correct="{{ session_question.is_correct|yesno:'true,false' }}">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-secondary me-2">Q{{ forloop.counter }}</span>
+                                        <span class="badge {% if session_question.is_correct %}bg-success{% else %}bg-danger{% endif %} me-2">
+                                            {% if session_question.is_correct %}
+                                                <i class="fas fa-check"></i> Correct
+                                            {% else %}
+                                                <i class="fas fa-times"></i> Incorrect
+                                            {% endif %}
+                                        </span>
+                                        <span class="badge bg-dark">{{ session_question.question.points }} pts</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted">{{ session_question.question.get_question_type_display }}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="mb-2">{{ session_question.question.question_text }}</h6>
+                                </div>
+                                
+                                {% if session_question.question.question_type == 'multiple_choice' %}
+                                    <div class="ms-3">
+                                        {% for option in session_question.question.options.all %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" disabled 
+                                                       {% if option.option_text == session_question.user_answer %}checked{% endif %}>
+                                                <label class="form-check-label {% if option.is_correct %}text-success fw-bold{% elif option.option_text == session_question.user_answer and not option.is_correct %}text-danger{% endif %}">
+                                                    {{ option.option_text }}
+                                                    {% if option.is_correct %}
+                                                        <i class="fas fa-check text-success ms-1"></i>
+                                                    {% elif option.option_text == session_question.user_answer and not option.is_correct %}
+                                                        <i class="fas fa-times text-danger ms-1"></i>
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% elif session_question.question.question_type == 'true_false' %}
+                                    <div class="ms-3">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" disabled 
+                                                   {% if session_question.user_answer == 'true' %}checked{% endif %}>
+                                            <label class="form-check-label {% if session_question.question.correct_answer == 'true' %}text-success fw-bold{% elif session_question.user_answer == 'true' and session_question.question.correct_answer != 'true' %}text-danger{% endif %}">
+                                                True
+                                                {% if session_question.question.correct_answer == 'true' %}
+                                                    <i class="fas fa-check text-success ms-1"></i>
+                                                {% elif session_question.user_answer == 'true' and session_question.question.correct_answer != 'true' %}
+                                                    <i class="fas fa-times text-danger ms-1"></i>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" disabled 
+                                                   {% if session_question.user_answer == 'false' %}checked{% endif %}>
+                                            <label class="form-check-label {% if session_question.question.correct_answer == 'false' %}text-success fw-bold{% elif session_question.user_answer == 'false' and session_question.question.correct_answer != 'false' %}text-danger{% endif %}">
+                                                False
+                                                {% if session_question.question.correct_answer == 'false' %}
+                                                    <i class="fas fa-check text-success ms-1"></i>
+                                                {% elif session_question.user_answer == 'false' and session_question.question.correct_answer != 'false' %}
+                                                    <i class="fas fa-times text-danger ms-1"></i>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="ms-3">
+                                        <div class="mb-2">
+                                            <strong>Student Answer:</strong>
+                                            <div class="border p-2 mt-1 bg-light">
+                                                {{ session_question.user_answer|default:"No answer provided"|linebreaks }}
+                                            </div>
+                                        </div>
+                                        {% if session_question.question.correct_answer %}
+                                            <div class="mb-2">
+                                                <strong>Expected Answer:</strong>
+                                                <div class="border p-2 mt-1 bg-success bg-opacity-10">
+                                                    {{ session_question.question.correct_answer|linebreaks }}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if not session_question.is_correct and session_question.question.question_type != 'essay' %}
+                                    <div class="mt-2 ms-3">
+                                        <small class="text-muted">
+                                            <strong>Correct Answer:</strong> 
+                                            {% if session_question.question.question_type == 'multiple_choice' %}
+                                                {% for option in session_question.question.options.all %}
+                                                    {% if option.is_correct %}{{ option.option_text }}{% endif %}
+                                                {% endfor %}
+                                            {% elif session_question.question.question_type == 'true_false' %}
+                                                {{ session_question.question.correct_answer|title }}
+                                            {% else %}
+                                                {{ session_question.question.correct_answer }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Score Breakdown -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Score Breakdown</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Overall Score</span>
+                                    <span class="fw-bold">{{ user_exam.score|default:0|floatformat:1 }}%</span>
+                                </div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar {% if user_exam.score >= user_exam.exam.passing_score %}bg-success{% elif user_exam.score >= 70 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         data-width="{{ user_exam.score|default:'0' }}"></div>
+                                </div>
+                                <small class="text-muted">Passing Score: {{ user_exam.exam.passing_score }}%</small>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h4 class="text-success mb-0">{{ correct_answers }}</h4>
+                                        <small class="text-muted">Correct</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-danger mb-0">{{ incorrect_answers }}</h4>
+                                    <small class="text-muted">Incorrect</small>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="small">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Points Earned:</span>
+                                    <span>{{ total_points_earned }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Total Points:</span>
+                                    <span>{{ total_points }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Questions:</span>
+                                    <span>{{ total_questions }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Time Limit:</span>
+                                    <span>{{ user_exam.exam.duration }} min</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary" onclick="printResults()">
+                                    <i class="fas fa-print me-2"></i>Print Results
+                                </button>
+                                <a href="{% url 'administration:individual_user_history' user_exam.user.id %}" class="btn btn-outline-info">
+                                    <i class="fas fa-history me-2"></i>View User History
+                                </a>
+                                {% if user_exam.status != 'not_started' %}
+                                    <button class="btn btn-outline-warning" onclick="resetExam()">
+                                        <i class="fas fa-redo me-2"></i>Reset Exam
+                                    </button>
+                                {% endif %}
+                                <a href="{% url 'administration:exam_results' user_exam.exam.exam_id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-list me-2"></i>All Results
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exam Information -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Exam Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="small">
+                                <div class="mb-2">
+                                    <strong>Title:</strong><br>
+                                    {{ user_exam.exam.title }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Course:</strong><br>
+                                    {{ user_exam.exam.course.name }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Duration:</strong><br>
+                                    {{ user_exam.exam.duration }} minutes
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Total Points:</strong><br>
+                                    {{ user_exam.exam.total_points }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Passing Score:</strong><br>
+                                    {{ user_exam.exam.passing_score }}%
+                                </div>
+                                <div>
+                                    <strong>Max Attempts:</strong><br>
+                                    {{ user_exam.exam.max_attempts|default:"Unlimited" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar widths from data attributes
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function(bar) {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+});
+</script>
+
+<script>
+function showAll() {
+    document.querySelectorAll('.question-item').forEach(item => {
+        item.style.display = 'block';
+    });
+}
+
+function showCorrect() {
+    document.querySelectorAll('.question-item').forEach(item => {
+        if (item.dataset.correct === 'true') {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function showIncorrect() {
+    document.querySelectorAll('.question-item').forEach(item => {
+        if (item.dataset.correct === 'false') {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function printResults() {
+    window.print();
+}
+
+function resetExam() {
+    if (confirm('Are you sure you want to reset this exam?\n\nThis will:\n- Delete all current answers\n- Reset the exam status\n- Allow the student to retake the exam\n\nThis action cannot be undone.')) {
+        fetch(`/administration/user-exam/{{ user_exam.user_exam_id }}/reset/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Exam has been reset successfully.');
+                window.location.href = '/administration/exam/{{ user_exam.exam.exam_id }}/results/';
+            } else {
+                alert('Error resetting exam: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error resetting exam: ' + error);
+        });
+    }
+}
+</script>
+
+<style>
+@media print {
+    .btn, .card-header .d-flex .btn-group {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+    
+    .question-item {
+        page-break-inside: avoid;
+    }
+}
+</style>
+{% endblock %}

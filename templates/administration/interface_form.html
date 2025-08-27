@@ -1,0 +1,199 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Create Interface{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Create New Interface
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_module_name" class="form-label">
+                                        Module Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="id_module_name" 
+                                           name="module_name" required
+                                           placeholder="e.g., User Management, Exam System">
+                                    <div class="form-text">
+                                        The name of the module or system component
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Please provide a module name.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_function" class="form-label">
+                                        Function <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="id_function" 
+                                           name="function" required
+                                           placeholder="e.g., Create User, View Reports">
+                                    <div class="form-text">
+                                        The specific function or purpose of this interface
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Please provide a function description.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_url" class="form-label">
+                                URL Pattern <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="id_url" 
+                                   name="url" required
+                                   placeholder="e.g., /administration/users/, /exams/take/">
+                            <div class="form-text">
+                                The URL pattern that this interface controls access to
+                            </div>
+                            <div class="invalid-feedback">
+                                Please provide a valid URL pattern.
+                            </div>
+                        </div>
+                        
+                        <!-- Examples Section -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-lightbulb"></i> Examples
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Module Name:</strong>
+                                        <ul class="list-unstyled small">
+                                            <li>• User Management</li>
+                                            <li>• Course Administration</li>
+                                            <li>• Exam System</li>
+                                            <li>• Reporting Dashboard</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Function:</strong>
+                                        <ul class="list-unstyled small">
+                                            <li>• Create User</li>
+                                            <li>• Edit Course</li>
+                                            <li>• Take Exam</li>
+                                            <li>• View Reports</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>URL Pattern:</strong>
+                                        <ul class="list-unstyled small">
+                                            <li>• /administration/users/</li>
+                                            <li>• /administration/courses/</li>
+                                            <li>• /exams/take/</li>
+                                            <li>• /administration/reports/</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'administration:interface_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Interfaces
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Interface
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-question-circle"></i> Interface Access Control Help
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>What are Interfaces?</h6>
+                            <p class="small text-muted">
+                                Interfaces represent different parts of the system that users can access. 
+                                Each interface controls access to specific functionality or pages.
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>How Access Control Works</h6>
+                            <p class="small text-muted">
+                                Once an interface is created, you can assign specific users access to it. 
+                                Users will only be able to access interfaces they have been granted permission to use.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Bootstrap form validation
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+    
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+    
+    // URL pattern validation
+    document.getElementById('id_url').addEventListener('input', function(e) {
+        const value = e.target.value;
+        const isValid = value.startsWith('/') && value.length > 1;
+        
+        if (value && !isValid) {
+            e.target.setCustomValidity('URL pattern must start with / and be more than one character');
+        } else {
+            e.target.setCustomValidity('');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,301 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Reports & Analytics - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Reports & Analytics</h4>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'administration:export_reports_excel' %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-file-excel me-2"></i>Export Excel
+                            </a>
+                            <a href="{% url 'administration:export_reports_pdf' %}" class="btn btn-danger btn-sm">
+                                <i class="fas fa-file-pdf me-2"></i>Export PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Report Navigation -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                <button class="nav-link active" id="v-pills-exam-tab" data-bs-toggle="pill" data-bs-target="#v-pills-exam" type="button" role="tab" aria-controls="v-pills-exam" aria-selected="true">
+                                    <i class="fas fa-chart-bar me-2"></i>Exam Performance
+                                </button>
+                                <button class="nav-link" id="v-pills-user-tab" data-bs-toggle="pill" data-bs-target="#v-pills-user" type="button" role="tab" aria-controls="v-pills-user" aria-selected="false">
+                                    <i class="fas fa-users me-2"></i>User Performance
+                                </button>
+                                <button class="nav-link" id="v-pills-activity-tab" data-bs-toggle="pill" data-bs-target="#v-pills-activity" type="button" role="tab" aria-controls="v-pills-activity" aria-selected="false">
+                                    <i class="fas fa-clock me-2"></i>Recent Activity
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="tab-content" id="v-pills-tabContent">
+                                <!-- Exam Performance Tab -->
+                                <div class="tab-pane fade show active" id="v-pills-exam" role="tabpanel" aria-labelledby="v-pills-exam-tab">
+                                    <h5 class="mb-3">Exam Performance Statistics</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Exam Title</th>
+                                                    <th>Total Attempts</th>
+                                                    <th>Completed</th>
+                                                    <th>Average Score</th>
+                                                    <th>Success Rate</th>
+                                                    <th>Created</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for exam in exam_stats %}
+                                                <tr>
+                                                    <td>
+                                                        <div>
+                                                            <h6 class="mb-1">{{ exam.title }}</h6>
+                                                            <small class="text-muted">{{ exam.course.name }}</small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-primary">{{ exam.total_attempts }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-success">{{ exam.completed_attempts }}</span>
+                                                    </td>
+                                                    <td>
+                                                        {% if exam.avg_score %}
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="progress me-2" style="width: 60px; height: 8px;">
+                                                    <div class="progress-bar" role="progressbar" data-width="{{ exam.avg_score|floatformat:0|default:'0' }}"></div>
+                                                </div>
+                                                                <small>{{ exam.avg_score|floatformat:1 }}%</small>
+                                                            </div>
+                                                        {% else %}
+                                                            <span class="text-muted">No data</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if exam.total_attempts > 0 %}
+                                                            {% widthratio exam.completed_attempts exam.total_attempts 100 as success_rate %}
+                                                            <span class="badge bg-{% if success_rate >= 80 %}success{% elif success_rate >= 60 %}warning{% else %}danger{% endif %}">
+                                                                {{ success_rate }}%
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ exam.created_at|date:"M d, Y" }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4">
+                                                        <div class="text-muted">
+                                                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                                                            <p>No exam data available.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- User Performance Tab -->
+                                <div class="tab-pane fade" id="v-pills-user" role="tabpanel" aria-labelledby="v-pills-user-tab">
+                                    <h5 class="mb-3">Top Performing Users</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>User</th>
+                                                    <th>Total Exams</th>
+                                                    <th>Completed</th>
+                                                    <th>Average Score</th>
+                                                    <th>Completion Rate</th>
+                                                    <th>Last Activity</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in user_stats %}
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm me-2">
+                                                                <div class="avatar-title bg-primary rounded-circle">
+                                                                    {{ user.name|first }}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0">{{ user.name }}</h6>
+                                                                <small class="text-muted">{{ user.national_id }}</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-primary">{{ user.total_exams }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-success">{{ user.completed_exams }}</span>
+                                                    </td>
+                                                    <td>
+                                                        {% if user.avg_score %}
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="progress me-2" style="width: 60px; height: 8px;">
+                                                    <div class="progress-bar" role="progressbar" data-width="{{ user.avg_score|floatformat:0|default:'0' }}"></div>
+                                                </div>
+                                                                <small>{{ user.avg_score|floatformat:1 }}%</small>
+                                                            </div>
+                                                        {% else %}
+                                                            <span class="text-muted">No data</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if user.total_exams > 0 %}
+                                                            {% widthratio user.completed_exams user.total_exams 100 as completion_rate %}
+                                                            <span class="badge bg-{% if completion_rate >= 80 %}success{% elif completion_rate >= 60 %}warning{% else %}danger{% endif %}">
+                                                                {{ completion_rate }}%
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if user.last_login %}
+                                                            {{ user.last_login|date:"M d, Y H:i" }}
+                                                        {% else %}
+                                                            <span class="text-muted">Never</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4">
+                                                        <div class="text-muted">
+                                                            <i class="fas fa-users fa-2x mb-2"></i>
+                                                            <p>No user performance data available.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Recent Activity Tab -->
+                                <div class="tab-pane fade" id="v-pills-activity" role="tabpanel" aria-labelledby="v-pills-activity-tab">
+                                    <h5 class="mb-3">Recent Exam Sessions</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>User</th>
+                                                    <th>Exam</th>
+                                                    <th>Status</th>
+                                                    <th>Score</th>
+                                                    <th>Duration</th>
+                                                    <th>Started</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for session in recent_sessions %}
+                                                <tr>
+                                                    <td>
+                                                        <div>
+                                                            <h6 class="mb-0">{{ session.user_exam.user.name }}</h6>
+                                                            <small class="text-muted">{{ session.user_exam.user.national_id }}</small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div>
+                                                            <h6 class="mb-0">{{ session.user_exam.exam.title }}</h6>
+                                                            <small class="text-muted">{{ session.user_exam.exam.course.name }}</small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-{% if session.user_exam.status == 'completed' %}success{% elif session.user_exam.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                                            {{ session.user_exam.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {% if session.user_exam.score is not None %}
+                                                            <span class="badge bg-{% if session.user_exam.score >= 70 %}success{% elif session.user_exam.score >= 50 %}warning{% else %}danger{% endif %}">
+                                                                {{ session.user_exam.score|floatformat:1 }}%
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if session.end_time %}
+                                                            {% with duration=session.end_time|timeuntil:session.start_time %}
+                                                                {{ duration }}
+                                                            {% endwith %}
+                                                        {% else %}
+                                                            <span class="text-muted">In progress</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ session.start_time|date:"M d, Y H:i" }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4">
+                                                        <div class="text-muted">
+                                                            <i class="fas fa-clock fa-2x mb-2"></i>
+                                                            <p>No recent activity found.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar widths from data attributes
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function(bar) {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+});
+</script>
+
+<style>
+.avatar-sm {
+    height: 2rem;
+    width: 2rem;
+}
+
+.avatar-title {
+    align-items: center;
+    display: flex;
+    font-size: 0.875rem;
+    font-weight: 500;
+    height: 100%;
+    justify-content: center;
+    width: 100%;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,302 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{% if exam %}Edit Exam{% else %}Create Exam{% endif %} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">{% if exam %}Edit Exam{% else %}Create New Exam{% endif %}</h4>
+                        <a href="{% url 'administration:exam_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Exams
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Exam Information -->
+                            <div class="col-md-8">
+                                <h5 class="mb-3">Exam Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="id_exam_title" class="form-label">Exam Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="id_exam_title" name="exam_title" 
+                                           value="{% if exam %}{{ exam.exam_title }}{% endif %}" required>
+                                    <div class="invalid-feedback">
+                                        Please provide an exam title.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="id_description" name="description" rows="3" 
+                                              placeholder="Enter exam description and instructions...">{% if exam %}{{ exam.description }}{% endif %}</textarea>
+                                    <div class="form-text">Provide instructions and description for students</div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="id_course" class="form-label">Course <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="id_course" name="course" required>
+                                                <option value="">Select Course</option>
+                                                {% for course in courses %}
+                                                    <option value="{{ course.course_id }}" 
+                                                            {% if exam and exam.course.course_id == course.course_id %}selected{% endif %}>
+                                                        {{ course.course_name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                Please select a course.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="id_time_limit" class="form-label">Time Limit (minutes) <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="id_time_limit" name="time_limit" 
+                                                   value="{% if exam %}{{ exam.time_limit }}{% endif %}" 
+                                                   min="1" max="480" required>
+                                            <div class="form-text">Maximum 8 hours (480 minutes)</div>
+                                            <div class="invalid-feedback">
+                                                Please provide a valid duration (1-480 minutes).
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Exam Settings -->
+                            <div class="col-md-4">
+                                <h5 class="mb-3">Settings</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="id_total_points" class="form-label">Total Points <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="id_total_points" name="total_points" 
+                                           value="{% if exam %}{{ exam.total_points }}{% endif %}" 
+                                           min="1" step="0.5" required>
+                                    <div class="invalid-feedback">
+                                        Please provide total points.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_passing_score" class="form-label">Passing Score (%)</label>
+                                    <input type="number" class="form-control" id="id_passing_score" name="passing_score" 
+                                           value="{% if exam %}{{ exam.passing_score }}{% else %}60{% endif %}" 
+                                           min="0" max="100">
+                                    <div class="form-text">Minimum percentage to pass</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_max_attempts" class="form-label">Maximum Attempts</label>
+                                    <input type="number" class="form-control" id="id_max_attempts" name="max_attempts" 
+                                           value="{% if exam %}{{ exam.max_attempts }}{% else %}1{% endif %}" 
+                                           min="1" max="10">
+                                    <div class="form-text">Number of allowed attempts</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_is_active" name="is_active" 
+                                               {% if not exam or exam.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_active">
+                                            Active Exam
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_randomize_questions" name="randomize_questions" 
+                                               {% if exam.randomize_questions %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_randomize_questions">
+                                            Randomize Questions
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="id_show_results" name="show_results" 
+                                               {% if not exam or exam.show_results %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_show_results">
+                                            Show Results to Students
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Scheduling -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Scheduling</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="id_start_time" class="form-label">Start Time</label>
+                                            <input type="datetime-local" class="form-control" id="id_start_time" name="start_time" 
+                                                   value="{% if exam and exam.start_time %}{{ exam.start_time|date:'Y-m-d\TH:i' }}{% endif %}">
+                                            <div class="form-text">When students can start taking the exam</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="id_end_time" class="form-label">End Time</label>
+                                            <input type="datetime-local" class="form-control" id="id_end_time" name="end_time" 
+                                                   value="{% if exam and exam.end_time %}{{ exam.end_time|date:'Y-m-d\TH:i' }}{% endif %}">
+                                            <div class="form-text">When the exam becomes unavailable</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Exam Statistics (Edit Mode Only) -->
+                        {% if exam %}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Exam Statistics</h5>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h4 class="text-primary mb-1">{{ exam.questions.count }}</h4>
+                                                <p class="text-muted mb-0">Total Questions</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h4 class="text-success mb-1">{{ total_attempts }}</h4>
+                                                <p class="text-muted mb-0">Total Attempts</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h4 class="text-info mb-1">{{ completed_attempts }}</h4>
+                                                <p class="text-muted mb-0">Completed</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h4 class="text-warning mb-1">{{ avg_score|floatformat:1 }}%</h4>
+                                                <p class="text-muted mb-0">Average Score</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{% url 'administration:exam_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                    {% if exam %}
+                                        <a href="{% url 'administration:question_list' %}?exam={{ exam.id }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-question-circle me-2"></i>Manage Questions
+                                        </a>
+                                    {% endif %}
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>{% if exam %}Update Exam{% else %}Create Exam{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                // Validate time range
+                var startTime = document.getElementById('id_start_time');
+                var endTime = document.getElementById('id_end_time');
+                
+                if (startTime.value && endTime.value) {
+                    if (new Date(startTime.value) >= new Date(endTime.value)) {
+                        endTime.setCustomValidity('End time must be after start time');
+                    } else {
+                        endTime.setCustomValidity('');
+                    }
+                }
+                
+                // Validate passing score
+                var passingScore = document.getElementById('id_passing_score');
+                if (passingScore.value && (passingScore.value < 0 || passingScore.value > 100)) {
+                    passingScore.setCustomValidity('Passing score must be between 0 and 100');
+                } else {
+                    passingScore.setCustomValidity('');
+                }
+                
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Real-time validation
+document.addEventListener('DOMContentLoaded', function() {
+    var startTime = document.getElementById('id_start_time');
+    var endTime = document.getElementById('id_end_time');
+    
+    function validateTimeRange() {
+        if (startTime.value && endTime.value) {
+            if (new Date(startTime.value) >= new Date(endTime.value)) {
+                endTime.setCustomValidity('End time must be after start time');
+            } else {
+                endTime.setCustomValidity('');
+            }
+        }
+    }
+    
+    if (startTime && endTime) {
+        startTime.addEventListener('change', validateTimeRange);
+        endTime.addEventListener('change', validateTimeRange);
+    }
+    
+    // Duration formatting
+    var duration = document.getElementById('id_duration');
+    if (duration) {
+        duration.addEventListener('input', function(e) {
+            var value = parseInt(e.target.value);
+            if (value > 480) {
+                e.target.value = 480;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

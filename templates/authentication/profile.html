@@ -1,0 +1,148 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Profile - Quiz System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        User Profile
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Full Name</label>
+                                <p class="form-control-plaintext border-bottom">{{ user.name }}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-muted">National ID</label>
+                                <p class="form-control-plaintext border-bottom">{{ user.national_id }}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Position</label>
+                                <p class="form-control-plaintext border-bottom">{{ user.position }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Phone Number</label>
+                                <p class="form-control-plaintext border-bottom">{{ user.phone_number }}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Account Status</label>
+                                <p class="form-control-plaintext border-bottom">
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Account Type</label>
+                                <p class="form-control-plaintext border-bottom">
+                                    {% if user.is_admin %}
+                                        <span class="badge bg-primary">Administrator</span>
+                                    {% elif user.is_staff %}
+                                        <span class="badge bg-info">Staff</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">User</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Date Joined</label>
+                                <p class="form-control-plaintext border-bottom">{{ user.date_joined|date:"F d, Y" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Last Login</label>
+                                <p class="form-control-plaintext border-bottom">
+                                    {% if user.last_login %}
+                                        {{ user.last_login|date:"F d, Y H:i" }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if user.failed_login_attempts > 0 %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Security Notice:</strong> You have {{ user.failed_login_attempts }} failed login attempt(s).
+                        {% if user.is_account_locked %}
+                            Your account is currently locked.
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer text-center">
+                    <a href="{% url 'authentication:dashboard' %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Exam Statistics -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Exam Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-primary">{{ total_assigned }}</h4>
+                                <small class="text-muted">Total Assigned</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-success">{{ total_completed }}</h4>
+                                <small class="text-muted">Completed</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-warning">{{ total_pending }}</h4>
+                                <small class="text-muted">Pending</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-info">{{ average_score|floatformat:1 }}%</h4>
+                            <small class="text-muted">Average Score</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

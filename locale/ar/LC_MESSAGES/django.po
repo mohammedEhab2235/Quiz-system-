@@ -1,0 +1,512 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Quiz System 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 12:00+0000\n"
+"PO-Revision-Date: 2024-01-01 12:00+0000\n"
+"Last-Translator: Quiz System Team\n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#: templates/base/base.html
+msgid "Quiz System"
+msgstr "نظام الاختبارات"
+
+#: templates/base/base.html
+msgid "Dashboard"
+msgstr "لوحة التحكم"
+
+#: templates/base/base.html
+msgid "Administration"
+msgstr "الإدارة"
+
+#: templates/base/base.html
+msgid "User Management"
+msgstr "إدارة المستخدمين"
+
+#: templates/base/base.html
+msgid "Courses"
+msgstr "الدورات"
+
+#: templates/base/base.html
+msgid "Exams"
+msgstr "الاختبارات"
+
+#: templates/base/base.html
+msgid "Assignments"
+msgstr "المهام"
+
+#: templates/base/base.html
+msgid "Reports"
+msgstr "التقارير"
+
+#: templates/base/base.html
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+#: templates/base/base.html
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+#: templates/base/base.html
+msgid "Quiz System. All rights reserved."
+msgstr "نظام الاختبارات. جميع الحقوق محفوظة."
+
+# Course form translations
+msgid "Course Name"
+msgstr "اسم الدورة"
+
+msgid "Course Description"
+msgstr "وصف الدورة"
+
+msgid "Course Information"
+msgstr "معلومات الدورة"
+
+msgid "Enter course name..."
+msgstr "أدخل اسم الدورة..."
+
+msgid "Course name is required and must be unique"
+msgstr "اسم الدورة مطلوب ويجب أن يكون فريداً"
+
+msgid "Choose a descriptive name for your course"
+msgstr "اختر اسماً وصفياً لدورتك"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "Enter course description..."
+msgstr "أدخل وصف الدورة..."
+
+msgid "Provide a detailed description of the course content and objectives"
+msgstr "قدم وصفاً مفصلاً لمحتوى الدورة وأهدافها"
+
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Active Course"
+msgstr "دورة نشطة"
+
+msgid "Students can enroll and take exams when active"
+msgstr "يمكن للطلاب التسجيل وأداء الامتحانات عندما تكون نشطة"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Maximum Students"
+msgstr "الحد الأقصى للطلاب"
+
+msgid "Enter maximum number..."
+msgstr "أدخل الحد الأقصى للعدد..."
+
+msgid "Leave empty for unlimited enrollment"
+msgstr "اتركه فارغاً للتسجيل غير المحدود"
+
+msgid "Start Date"
+msgstr "تاريخ البداية"
+
+msgid "End Date"
+msgstr "تاريخ النهاية"
+
+msgid "Prerequisites"
+msgstr "المتطلبات المسبقة"
+
+msgid "Required Courses"
+msgstr "الدورات المطلوبة"
+
+msgid "Hold Ctrl/Cmd to select multiple courses"
+msgstr "اضغط Ctrl/Cmd لتحديد دورات متعددة"
+
+msgid "Save"
+msgstr "حفظ"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Update"
+msgstr "تحديث"
+
+msgid "Create Course"
+msgstr "إنشاء دورة"
+
+msgid "Edit Course"
+msgstr "تعديل الدورة"
+
+msgid "Course Statistics"
+msgstr "إحصائيات الدورة"
+
+msgid "Total Students"
+msgstr "إجمالي الطلاب"
+
+msgid "Total Exams"
+msgstr "إجمالي الاختبارات"
+
+# User management translations
+msgid "User Management"
+msgstr "إدارة المستخدمين"
+
+msgid "Add New User"
+msgstr "إضافة مستخدم جديد"
+
+msgid "All User Types"
+msgstr "جميع أنواع المستخدمين"
+
+msgid "Regular User"
+msgstr "مستخدم عادي"
+
+msgid "Staff"
+msgstr "موظف"
+
+msgid "All Status"
+msgstr "جميع الحالات"
+
+msgid "Inactive"
+msgstr "غير نشط"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "National ID"
+msgstr "الرقم الوطني"
+
+msgid "Position"
+msgstr "المنصب"
+
+msgid "User Type"
+msgstr "نوع المستخدم"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Last Login"
+msgstr "آخر تسجيل دخول"
+
+msgid "Actions"
+msgstr "الإجراءات"
+
+msgid "User"
+msgstr "مستخدم"
+
+msgid "Never"
+msgstr "أبداً"
+
+msgid "No users found matching your criteria."
+msgstr "لم يتم العثور على مستخدمين يطابقون معاييرك."
+
+msgid "No users found"
+msgstr "لم يتم العثور على مستخدمين"
+
+msgid "Clear Filters"
+msgstr "مسح المرشحات"
+
+msgid "Loading users..."
+msgstr "جاري تحميل المستخدمين..."
+
+msgid "Close"
+msgstr "إغلاق"
+
+msgid "Showing"
+msgstr "عرض"
+
+msgid "of"
+msgstr "من"
+
+msgid "users"
+msgstr "مستخدمين"
+
+msgid "per page"
+msgstr "في الصفحة"
+
+msgid "First page"
+msgstr "الصفحة الأولى"
+
+msgid "Previous page"
+msgstr "الصفحة السابقة"
+
+msgid "Next page"
+msgstr "الصفحة التالية"
+
+msgid "Last page"
+msgstr "الصفحة الأخيرة"
+
+msgid "Page"
+msgstr "صفحة"
+
+msgid "current"
+msgstr "الحالية"
+
+msgid "Actions for"
+msgstr "إجراءات لـ"
+
+msgid "More actions for"
+msgstr "المزيد من الإجراءات لـ"
+
+msgid "Search by name, ID, or position"
+msgstr "البحث بالاسم أو الرقم أو المنصب"
+
+msgid "Processing..."
+msgstr "جاري المعالجة..."
+
+msgid "Confirm Action"
+msgstr "تأكيد الإجراء"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Confirm"
+msgstr "تأكيد"
+
+msgid "sortable column"
+msgstr "عمود قابل للترتيب"
+
+msgid "Edit User"
+msgstr "تعديل المستخدم"
+
+msgid "Deactivate User"
+msgstr "إلغاء تفعيل المستخدم"
+
+msgid "Activate User"
+msgstr "تفعيل المستخدم"
+
+msgid "View History"
+msgstr "عرض التاريخ"
+
+msgid "Delete User"
+msgstr "حذف المستخدم"
+
+msgid "Are you sure you want to deactivate this user?"
+msgstr "هل أنت متأكد من أنك تريد إلغاء تفعيل هذا المستخدم؟"
+
+msgid "Are you sure you want to activate this user?"
+msgstr "هل أنت متأكد من أنك تريد تفعيل هذا المستخدم؟"
+
+msgid "Are you sure you want to delete this user?"
+msgstr "هل أنت متأكد من أنك تريد حذف هذا المستخدم؟"
+
+msgid "Enrolled Students"
+msgstr "الطلاب المسجلون"
+
+msgid "Active Exams"
+msgstr "الامتحانات النشطة"
+
+msgid "Completion Rate"
+msgstr "معدل الإنجاز"
+
+msgid "View Exams"
+msgstr "عرض الاختبارات"
+
+msgid "Update Course"
+msgstr "تحديث الدورة"
+
+msgid "Type to search for course names..."
+msgstr "اكتب للبحث عن أسماء الدورات..."
+
+msgid "Login"
+msgstr "تسجيل الدخول"
+
+msgid "National ID"
+msgstr "الرقم القومي"
+
+msgid "Enter your 14-digit National ID"
+msgstr "أدخل الرقم القومي المكون من 14 رقماً"
+
+msgid "Enter your 14-digit National ID number"
+msgstr "أدخل رقمك القومي المكون من 14 رقماً"
+
+msgid "Secure authentication via National ID"
+msgstr "مصادقة آمنة عبر الرقم القومي"
+
+msgid "Welcome"
+msgstr "مرحباً"
+
+msgid "Last login"
+msgstr "آخر تسجيل دخول"
+
+msgid "User Information"
+msgstr "معلومات المستخدم"
+
+msgid "Position"
+msgstr "المنصب"
+
+msgid "Phone"
+msgstr "الهاتف"
+
+msgid "Assigned Exams"
+msgstr "الامتحانات المخصصة"
+
+msgid "Pending"
+msgstr "معلق"
+
+msgid "Your Assigned Exams"
+msgstr "امتحاناتك المخصصة"
+
+msgid "In Progress"
+msgstr "قيد التقدم"
+
+msgid "Not Started"
+msgstr "لم يبدأ"
+
+msgid "Course"
+msgstr "الدورة"
+
+msgid "Duration"
+msgstr "المدة"
+
+msgid "min"
+msgstr "دقيقة"
+
+msgid "Questions"
+msgstr "الأسئلة"
+
+msgid "Available from"
+msgstr "متاح من"
+
+msgid "Available until"
+msgstr "متاح حتى"
+
+msgid "Completed on"
+msgstr "مكتمل في"
+
+msgid "Score"
+msgstr "النتيجة"
+
+msgid "Continue Exam"
+msgstr "متابعة الامتحان"
+
+msgid "Start Exam"
+msgstr "بدء الامتحان"
+
+msgid "Not Available"
+msgstr "غير متاح"
+
+msgid "No Exams Assigned"
+msgstr "لا توجد امتحانات مخصصة"
+
+msgid "You don't have any exams assigned at the moment."
+msgstr "ليس لديك أي امتحانات مخصصة في الوقت الحالي."
+
+msgid "No suggestions found"
+msgstr "لم يتم العثور على اقتراحات"
+
+#: templates/administration/user_list.html:5
+#: templates/administration/user_list.html:14
+msgid "User Management"
+msgstr "إدارة المستخدمين"
+
+#: templates/administration/user_list.html:16
+msgid "Add New User"
+msgstr "إضافة مستخدم جديد"
+
+#: templates/administration/user_list.html:25
+msgid "Search by name, ID, or position"
+msgstr "البحث بالاسم أو الهوية أو المنصب"
+
+#: templates/administration/user_list.html:29
+msgid "All User Types"
+msgstr "جميع أنواع المستخدمين"
+
+#: templates/administration/user_list.html:30
+msgid "Regular User"
+msgstr "مستخدم عادي"
+
+#: templates/administration/user_list.html:31
+#: templates/administration/user_list.html:84
+msgid "Staff"
+msgstr "موظف"
+
+#: templates/administration/user_list.html:36
+msgid "All Status"
+msgstr "جميع الحالات"
+
+#: templates/administration/user_list.html:37
+#: templates/administration/user_list.html:89
+msgid "Active"
+msgstr "نشط"
+
+#: templates/administration/user_list.html:38
+msgid "Inactive"
+msgstr "غير نشط"
+
+#: templates/administration/user_list.html:45
+msgid "Search"
+msgstr "بحث"
+
+#: templates/administration/user_list.html:56
+msgid "Name"
+msgstr "الاسم"
+
+#: templates/administration/user_list.html:58
+msgid "Position"
+msgstr "المنصب"
+
+#: templates/administration/user_list.html:59
+msgid "User Type"
+msgstr "نوع المستخدم"
+
+#: templates/administration/user_list.html:60
+msgid "Status"
+msgstr "الحالة"
+
+#: templates/administration/user_list.html:61
+msgid "Last Login"
+msgstr "آخر تسجيل دخول"
+
+#: templates/administration/user_list.html:62
+msgid "Actions"
+msgstr "الإجراءات"
+
+#: templates/administration/user_list.html:84
+#: templates/administration/user_list.html:89
+msgid "User"
+msgstr "مستخدم"
+
+#: templates/administration/user_list.html:96
+msgid "Never"
+msgstr "أبداً"
+
+#: templates/administration/user_list.html:103
+msgid "Edit User"
+msgstr "تعديل المستخدم"
+
+#: templates/administration/user_list.html:108
+msgid "Deactivate User"
+msgstr "إلغاء تفعيل المستخدم"
+
+#: templates/administration/user_list.html:108
+msgid "Activate User"
+msgstr "تفعيل المستخدم"
+
+#: templates/administration/user_list.html:109
+msgid "Are you sure you want to deactivate this user?"
+msgstr "هل أنت متأكد من أنك تريد إلغاء تفعيل هذا المستخدم؟"
+
+#: templates/administration/user_list.html:109
+msgid "Are you sure you want to activate this user?"
+msgstr "هل أنت متأكد من أنك تريد تفعيل هذا المستخدم؟"
+
+#: templates/administration/user_list.html:114
+msgid "View History"
+msgstr "عرض التاريخ"
+
+#: templates/administration/user_list.html:119
+msgid "Delete User"
+msgstr "حذف المستخدم"
+
+#: templates/administration/user_list.html:120
+msgid "Are you sure you want to delete this user?"
+msgstr "هل أنت متأكد من أنك تريد حذف هذا المستخدم؟"
+
+#: templates/administration/user_list.html:131
+msgid "No users found matching your criteria."
+msgstr "لم يتم العثور على مستخدمين يطابقون معاييرك."

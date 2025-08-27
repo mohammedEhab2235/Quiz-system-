@@ -1,0 +1,219 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% trans "Quiz System" %}{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    {% if LANGUAGE_BIDI %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Arabic Font Support -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Noto Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .main-content {
+            min-height: calc(100vh - 120px);
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            margin-top: auto;
+        }
+        .exam-card {
+            transition: transform 0.2s;
+        }
+        .exam-card:hover {
+            transform: translateY(-2px);
+        }
+        .session-timer {
+            position: fixed;
+            top: 20px;
+            z-index: 1000;
+        }
+        .question-nav {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .answered {
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+        }
+        .current-question {
+            background-color: #fff3cd !important;
+            border-color: #ffeaa7 !important;
+        }
+        
+        /* Language toggle button */
+        .language-toggle {
+            position: fixed;
+            top: 80px;
+            z-index: 1000;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,123,255,0.3);
+        }
+        
+        .language-toggle:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,123,255,0.4);
+        }
+        
+        /* RTL/LTR specific positioning */
+        [dir="ltr"] .session-timer {
+            right: 20px;
+        }
+        
+        [dir="rtl"] .session-timer {
+            left: 20px;
+        }
+        
+        [dir="ltr"] .language-toggle {
+            right: 20px;
+        }
+        
+        [dir="rtl"] .language-toggle {
+            left: 20px;
+        }
+        
+        /* RTL specific adjustments */
+        [dir="rtl"] .navbar-nav .dropdown-menu {
+            right: auto;
+            left: 0;
+        }
+        
+        [dir="rtl"] .dropdown-menu-end {
+            right: auto !important;
+            left: 0 !important;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="fas fa-graduation-cap me-2"></i>
+                {% trans "Quiz System" %}
+            </a>
+            
+            {% if user.is_authenticated %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'authentication:dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i>{% trans "Dashboard" %}
+                        </a>
+                    </li>
+                    {% if user.is_admin %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>{% trans "Administration" %}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'administration:user_list' %}">{% trans "User Management" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'administration:course_list' %}">{% trans "Courses" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'administration:exam_list' %}">{% trans "Exams" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'administration:assignment_list' %}">{% trans "Assignments" %}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'administration:reports' %}">{% trans "Reports" %}</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <!-- Language Toggle Button -->
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'set_language' %}" class="d-inline">
+                            {% csrf_token %}
+                            <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+                            <select name="language" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                                {% get_current_language as LANGUAGE_CODE %}
+                                {% get_available_languages as LANGUAGES %}
+                                {% for lang_code, lang_name in LANGUAGES %}
+                                    <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                                        {% if lang_code == 'en' %}🇺🇸 English{% elif lang_code == 'ar' %}🇸🇦 العربية{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>{{ user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'authentication:profile' %}">{% trans "Profile" %}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'authentication:logout' %}">{% trans "Logout" %}</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+    
+    <!-- Messages -->
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main class="main-content flex-grow-1">
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">
+                &copy; 2024 {% trans "Quiz System. All rights reserved." %}
+            </span>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

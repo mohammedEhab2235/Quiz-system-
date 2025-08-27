@@ -1,0 +1,695 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "User Management" %} - {% trans "Admin" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <h1 class="h4 mb-0">{% trans "User Management" %}</h1>
+                    <a href="{% url 'administration:user_create' %}" class="btn btn-primary" aria-label="{% trans 'Add New User' %}">
+                        <i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add New User" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter Form -->
+                    <form method="get" class="mb-4" role="search" aria-label="{% trans 'Search and filter users' %}">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label for="search-input" class="visually-hidden">{% trans "Search by name, ID, or position" %}</label>
+                                <input type="text" id="search-input" name="search" class="form-control" 
+                                       placeholder="{% trans 'Search by name, ID, or position' %}" 
+                                       value="{{ search_query }}" 
+                                       aria-describedby="search-help">
+                                <div id="search-help" class="form-text visually-hidden">{% trans "Enter keywords to search users" %}</div>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <label for="user-type-select" class="visually-hidden">{% trans "Filter by user type" %}</label>
+                                <select id="user-type-select" name="user_type" class="form-select" aria-label="{% trans 'Filter by user type' %}">
+                                    <option value="">{% trans "All User Types" %}</option>
+                                    <option value="user" {% if user_type == 'user' %}selected{% endif %}>{% trans "Regular User" %}</option>
+                                    <option value="staff" {% if user_type == 'staff' %}selected{% endif %}>{% trans "Staff" %}</option>
+                                    <option value="admin" {% if user_type == 'admin' %}selected{% endif %}>{% trans "Admin" %}</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <label for="status-select" class="visually-hidden">{% trans "Filter by status" %}</label>
+                                <select id="status-select" name="status" class="form-select" aria-label="{% trans 'Filter by status' %}">
+                                    <option value="">{% trans "All Status" %}</option>
+                                    <option value="active" {% if status == 'active' %}selected{% endif %}>{% trans "Active" %}</option>
+                                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>{% trans "Inactive" %}</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-2">
+                                <button type="submit" class="btn btn-outline-primary w-100" aria-label="{% trans 'Apply search and filters' %}">
+                                    <i class="fas fa-search" aria-hidden="true"></i> 
+                                    <span class="d-none d-sm-inline">{% trans "Search" %}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Users Table -->
+                    <div class="table-responsive" role="region" aria-label="{% trans 'Users table' %}" tabindex="0">
+                        <table class="table table-striped table-hover" role="table" aria-label="{% trans 'List of users with their details and actions' %}">
+                            <thead class="table-dark">
+                                <tr role="row">
+                                    <th scope="col" role="columnheader" tabindex="0" aria-sort="none" data-sort="name">
+                                        {% trans "Name" %}
+                                        <span class="visually-hidden">{% trans "sortable column" %}</span>
+                                    </th>
+                                    <th scope="col" role="columnheader" class="d-none d-md-table-cell">
+                                        {% trans "National ID" %}
+                                    </th>
+                                    <th scope="col" role="columnheader" class="d-none d-lg-table-cell">
+                                        {% trans "Position" %}
+                                    </th>
+                                    <th scope="col" role="columnheader">
+                                        {% trans "User Type" %}
+                                    </th>
+                                    <th scope="col" role="columnheader">
+                                        {% trans "Status" %}
+                                    </th>
+                                    <th scope="col" role="columnheader" class="d-none d-sm-table-cell">
+                                        {% trans "Last Login" %}
+                                    </th>
+                                    <th scope="col" role="columnheader">
+                                        {% trans "Actions" %}
+                                        <span class="visually-hidden">{% trans "Available actions for each user" %}</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody role="rowgroup">
+                                {% for user in page_obj %}
+                                <tr role="row" data-user-id="{{ user.id }}">
+                                    <td role="gridcell">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2" aria-hidden="true">
+                                                <div class="avatar-title bg-primary rounded-circle">
+                                                    {{ user.name|first|upper }}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0" id="user-name-{{ user.id }}">{{ user.name }}</h6>
+                                                <small class="text-muted d-md-none">ID: {{ user.national_id }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td role="gridcell" class="d-none d-md-table-cell">
+                                        <span aria-label="{% trans 'National ID' %}: {{ user.national_id }}">{{ user.national_id }}</span>
+                                    </td>
+                                    <td role="gridcell" class="d-none d-lg-table-cell">
+                                        <span aria-label="{% trans 'Position' %}: {{ user.position|default:'-' }}">{{ user.position|default:"-" }}</span>
+                                    </td>
+                                    <td role="gridcell">
+                                        <span class="badge bg-{% if user.is_admin %}danger{% elif user.is_staff %}warning{% else %}info{% endif %}" 
+                                              role="status" 
+                                              aria-label="{% trans 'User type' %}: {% if user.is_admin %}{% trans 'Admin' %}{% elif user.is_staff %}{% trans 'Staff' %}{% else %}{% trans 'User' %}{% endif %}">
+                                            {% if user.is_admin %}{% trans "Admin" %}{% elif user.is_staff %}{% trans "Staff" %}{% else %}{% trans "User" %}{% endif %}
+                                        </span>
+                                    </td>
+                                    <td role="gridcell">
+                                        <span class="badge bg-{% if user.is_active %}success{% else %}secondary{% endif %}" 
+                                              role="status" 
+                                              aria-label="{% trans 'Status' %}: {% if user.is_active %}{% trans 'Active' %}{% else %}{% trans 'Inactive' %}{% endif %}">
+                                            {% if user.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                                        </span>
+                                    </td>
+                                    <td role="gridcell" class="d-none d-sm-table-cell">
+                                        {% if user.last_login %}
+                                            <time datetime="{{ user.last_login|date:'c' }}" aria-label="{% trans 'Last login' %}: {{ user.last_login|date:'M d, Y H:i' }}">
+                                                {{ user.last_login|date:"M d, Y H:i" }}
+                                            </time>
+                                        {% else %}
+                                            <span class="text-muted" aria-label="{% trans 'Last login' %}: {% trans 'Never' %}">{% trans "Never" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td role="gridcell">
+                                        <div class="btn-group" role="group" aria-label="{% trans 'Actions for' %} {{ user.name }}">
+                                            <a href="{% url 'administration:user_edit' user.id %}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               aria-label="{% trans 'Edit User' %}: {{ user.name }}"
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-placement="top" 
+                                               title="{% trans 'Edit User' %}">
+                                                <i class="fas fa-edit" aria-hidden="true"></i>
+                                                <span class="visually-hidden">{% trans "Edit User" %}</span>
+                                            </a>
+                                            <form method="post" action="{% url 'administration:user_toggle_status' user.id %}" class="d-inline" 
+                                                  onsubmit="return confirm('{% if user.is_active %}{% trans 'Are you sure you want to deactivate this user?' %}{% else %}{% trans 'Are you sure you want to activate this user?' %}{% endif %}');">
+                                                {% csrf_token %}
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-outline-warning" 
+                                                        aria-label="{% if user.is_active %}{% trans 'Deactivate User' %}{% else %}{% trans 'Activate User' %}{% endif %}: {{ user.name }}"
+                                                        data-bs-toggle="tooltip" 
+                                                        data-bs-placement="top" 
+                                                        title="{% if user.is_active %}{% trans 'Deactivate User' %}{% else %}{% trans 'Activate User' %}{% endif %}">
+                                                    <i class="fas fa-{% if user.is_active %}ban{% else %}check{% endif %}" aria-hidden="true"></i>
+                                                    <span class="visually-hidden">{% if user.is_active %}{% trans "Deactivate User" %}{% else %}{% trans "Activate User" %}{% endif %}</span>
+                                                </button>
+                                            </form>
+                                            <a href="{% url 'administration:individual_user_history' user.id %}" 
+                                               class="btn btn-sm btn-outline-info" 
+                                               aria-label="{% trans 'View History' %}: {{ user.name }}"
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-placement="top" 
+                                               title="{% trans 'View History' %}">
+                                                <i class="fas fa-history" aria-hidden="true"></i>
+                                                <span class="visually-hidden">{% trans "View History" %}</span>
+                                            </a>
+                                            <form method="post" action="{% url 'administration:user_delete' user.id %}" class="d-inline" 
+                                                  onsubmit="return confirm('{% trans 'Are you sure you want to delete this user?' %}');">
+                                                {% csrf_token %}
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-outline-danger" 
+                                                        aria-label="{% trans 'Delete User' %}: {{ user.name }}"
+                                                        data-bs-toggle="tooltip" 
+                                                        data-bs-placement="top" 
+                                                        title="{% trans 'Delete User' %}">
+                                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                                    <span class="visually-hidden">{% trans "Delete User" %}</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <!-- Mobile Actions Dropdown -->
+                                        <div class="dropdown d-md-none">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" 
+                                                    id="mobileActions{{ user.id }}" 
+                                                    data-bs-toggle="dropdown" 
+                                                    aria-expanded="false"
+                                                    aria-label="{% trans 'More actions for' %} {{ user.name }}">
+                                                <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="mobileActions{{ user.id }}">
+                                                <li><a class="dropdown-item" href="{% url 'administration:user_edit' user.id %}">{% trans "Edit User" %}</a></li>
+                                                <li><a class="dropdown-item" href="{% url 'administration:individual_user_history' user.id %}">{% trans "View History" %}</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <form method="post" action="{% url 'administration:user_toggle_status' user.id %}" class="d-inline w-100">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="dropdown-item text-warning" 
+                                                                onclick="return confirm('{% if user.is_active %}{% trans 'Are you sure you want to deactivate this user?' %}{% else %}{% trans 'Are you sure you want to activate this user?' %}{% endif %}');">
+                                                            {% if user.is_active %}{% trans "Deactivate User" %}{% else %}{% trans "Activate User" %}{% endif %}
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li>
+                                                    <form method="post" action="{% url 'administration:user_delete' user.id %}" class="d-inline w-100">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="dropdown-item text-danger" 
+                                                                onclick="return confirm('{% trans 'Are you sure you want to delete this user?' %}');">
+                                                            {% trans "Delete User" %}
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr role="row">
+                                    <td colspan="7" class="text-center text-muted py-5" role="gridcell">
+                                        <div class="empty-state">
+                                            <i class="fas fa-users fa-3x mb-3 text-secondary" aria-hidden="true"></i>
+                                            <h5 class="mb-2">{% trans "No users found" %}</h5>
+                                            <p class="mb-3 text-muted">{% trans "No users found matching your criteria." %}</p>
+                                            <a href="{% url 'administration:user_list' %}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-refresh" aria-hidden="true"></i> {% trans "Clear Filters" %}
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loading-state" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                        <p class="mt-2 text-muted">{% trans "Loading users..." %}</p>
+                    </div>
+
+                    <!-- Error State -->
+                    {% if messages %}
+                        <div class="alert-container mt-3">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-circle{% else %}info-circle{% endif %}" aria-hidden="true"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'Close' %}"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="User pagination" class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="pagination-info">
+                                <small class="text-muted">
+                                    {% trans "Showing" %} {{ page_obj.start_index }} - {{ page_obj.end_index }} 
+                                    {% trans "of" %} {{ page_obj.paginator.count }} {% trans "users" %}
+                                </small>
+                            </div>
+                            <div class="pagination-controls">
+                                <select class="form-select form-select-sm" id="page-size-selector" style="width: auto;">
+                                    <option value="10" {% if request.GET.page_size == '10' %}selected{% endif %}>10 {% trans "per page" %}</option>
+                                    <option value="25" {% if request.GET.page_size == '25' %}selected{% endif %}>25 {% trans "per page" %}</option>
+                                    <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50 {% trans "per page" %}</option>
+                                    <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100 {% trans "per page" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <ul class="pagination justify-content-center flex-wrap">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" 
+                                       href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type %}&user_type={{ user_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                                       aria-label="{% trans 'First page' %}"
+                                       data-bs-toggle="tooltip"
+                                       title="{% trans 'First page' %}">
+                                        <i class="fas fa-angle-double-left" aria-hidden="true"></i>
+                                        <span class="visually-hidden">{% trans "First page" %}</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" 
+                                       href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type %}&user_type={{ user_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                                       aria-label="{% trans 'Previous page' %}"
+                                       data-bs-toggle="tooltip"
+                                       title="{% trans 'Previous page' %}">
+                                        <i class="fas fa-angle-left" aria-hidden="true"></i>
+                                        <span class="visually-hidden">{% trans "Previous page" %}</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-label="{% trans 'First page' %}">
+                                        <i class="fas fa-angle-double-left" aria-hidden="true"></i>
+                                    </span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-label="{% trans 'Previous page' %}">
+                                        <i class="fas fa-angle-left" aria-hidden="true"></i>
+                                    </span>
+                                </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link">
+                                            {{ num }}
+                                            <span class="visually-hidden">({% trans "current" %})</span>
+                                        </span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" 
+                                           href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type %}&user_type={{ user_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                                           aria-label="{% trans 'Page' %} {{ num }}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                                    <li class="page-item">
+                                        <a class="page-link" 
+                                           href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type %}&user_type={{ user_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                                           aria-label="{% trans 'Page' %} {{ num }}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" 
+                                       href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type %}&user_type={{ user_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                                       aria-label="{% trans 'Next page' %}"
+                                       data-bs-toggle="tooltip"
+                                       title="{% trans 'Next page' %}">
+                                        <i class="fas fa-angle-right" aria-hidden="true"></i>
+                                        <span class="visually-hidden">{% trans "Next page" %}</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" 
+                                       href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type %}&user_type={{ user_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                                       aria-label="{% trans 'Last page' %}"
+                                       data-bs-toggle="tooltip"
+                                       title="{% trans 'Last page' %}">
+                                        <i class="fas fa-angle-double-right" aria-hidden="true"></i>
+                                        <span class="visually-hidden">{% trans "Last page" %}</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-label="{% trans 'Next page' %}">
+                                        <i class="fas fa-angle-right" aria-hidden="true"></i>
+                                    </span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-label="{% trans 'Last page' %}">
+                                        <i class="fas fa-angle-double-right" aria-hidden="true"></i>
+                                    </span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Enhanced Functionality -->
+<script>
+// Enhanced User List Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Page size selector functionality
+    const pageSizeSelector = document.getElementById('page-size-selector');
+    if (pageSizeSelector) {
+        pageSizeSelector.addEventListener('change', function() {
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('page_size', this.value);
+            currentUrl.searchParams.set('page', '1'); // Reset to first page
+            window.location.href = currentUrl.toString();
+        });
+    }
+
+    // Enhanced search functionality with debouncing
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 3 || this.value.length === 0) {
+                    // Auto-submit search after 500ms delay
+                    this.form.submit();
+                }
+            }, 500);
+        });
+    }
+
+    // Keyboard navigation for table rows
+    const tableRows = document.querySelectorAll('tbody tr[data-user-id]');
+    tableRows.forEach((row, index) => {
+        row.setAttribute('tabindex', '0');
+        row.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    const editLink = row.querySelector('a[href*="user_edit"]');
+                    if (editLink) editLink.click();
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (index < tableRows.length - 1) {
+                        tableRows[index + 1].focus();
+                    }
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (index > 0) {
+                        tableRows[index - 1].focus();
+                    }
+                    break;
+                case 'Delete':
+                    e.preventDefault();
+                    const deleteBtn = row.querySelector('button[title*="Delete"], a[title*="Delete"]');
+                    if (deleteBtn) deleteBtn.click();
+                    break;
+            }
+        });
+
+        // Visual feedback for keyboard focus
+        row.addEventListener('focus', function() {
+            this.classList.add('table-active');
+        });
+        row.addEventListener('blur', function() {
+            this.classList.remove('table-active');
+        });
+    });
+
+    // Enhanced form validation
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                // Show loading state
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {% trans "Processing..." %}';
+                submitBtn.disabled = true;
+
+                // Re-enable after 3 seconds as fallback
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }, 3000);
+            }
+        });
+    });
+
+    // Table sorting functionality
+    const sortableHeaders = document.querySelectorAll('th[data-sort]');
+    sortableHeaders.forEach(header => {
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', function() {
+            const sortField = this.dataset.sort;
+            const currentUrl = new URL(window.location);
+            const currentSort = currentUrl.searchParams.get('sort');
+            const currentOrder = currentUrl.searchParams.get('order');
+
+            if (currentSort === sortField && currentOrder === 'asc') {
+                currentUrl.searchParams.set('order', 'desc');
+            } else {
+                currentUrl.searchParams.set('order', 'asc');
+            }
+            currentUrl.searchParams.set('sort', sortField);
+            window.location.href = currentUrl.toString();
+        });
+    });
+
+    // Auto-hide alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    });
+
+    // Confirm dialogs with better UX
+    const confirmButtons = document.querySelectorAll('[onclick*="confirm"]');
+    confirmButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const confirmText = this.getAttribute('onclick').match(/confirm\('([^']+)'/)?.[1];
+            if (confirmText) {
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">{% trans "Confirm Action" %}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>${confirmText}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                                <button type="button" class="btn btn-danger" id="confirmAction">{% trans "Confirm" %}</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+
+                modal.querySelector('#confirmAction').addEventListener('click', () => {
+                    if (this.tagName === 'A') {
+                        window.location.href = this.href;
+                    } else if (this.form) {
+                        this.form.submit();
+                    }
+                });
+
+                modal.addEventListener('hidden.bs.modal', () => {
+                    document.body.removeChild(modal);
+                });
+            }
+        });
+    });
+
+    // Performance optimization: Virtual scrolling for large tables
+    const tableContainer = document.querySelector('.table-responsive');
+    if (tableContainer && tableRows.length > 50) {
+        // Implement virtual scrolling for better performance
+        let isScrolling = false;
+        tableContainer.addEventListener('scroll', function() {
+            if (!isScrolling) {
+                window.requestAnimationFrame(() => {
+                    // Lazy load visible rows only
+                    const containerRect = tableContainer.getBoundingClientRect();
+                    tableRows.forEach(row => {
+                        const rowRect = row.getBoundingClientRect();
+                        const isVisible = rowRect.top < containerRect.bottom && rowRect.bottom > containerRect.top;
+                        
+                        if (isVisible && !row.dataset.loaded) {
+                            row.dataset.loaded = 'true';
+                            // Load any deferred content here
+                        }
+                    });
+                    isScrolling = false;
+                });
+            }
+            isScrolling = true;
+        });
+    }
+});
+</script>
+
+<style>
+/* Enhanced CSS for better UX */
+.table tbody tr[data-user-id]:hover {
+    background-color: var(--bs-gray-100);
+    cursor: pointer;
+}
+
+.table tbody tr[data-user-id]:focus {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: -2px;
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.empty-state {
+    padding: 2rem;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem;
+    margin-right: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        display: none;
+    }
+    
+    .dropdown.d-md-none {
+        display: block !important;
+    }
+    
+    .pagination {
+        font-size: 0.875rem;
+    }
+    
+    .pagination .page-link {
+        padding: 0.375rem 0.5rem;
+    }
+}
+
+th[data-sort] {
+    position: relative;
+    user-select: none;
+}
+
+th[data-sort]:after {
+    content: '\2195';
+    position: absolute;
+    right: 8px;
+    opacity: 0.5;
+}
+
+th[data-sort].asc:after {
+    content: '\2191';
+    opacity: 1;
+}
+
+th[data-sort].desc:after {
+    content: '\2193';
+    opacity: 1;
+}
+
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-success {
+    border-left-color: var(--bs-success);
+}
+
+.alert-error,
+.alert-danger {
+    border-left-color: var(--bs-danger);
+}
+
+.alert-warning {
+    border-left-color: var(--bs-warning);
+}
+
+.alert-info {
+    border-left-color: var(--bs-info);
+}
+
+.avatar-sm {
+    height: 2rem;
+    width: 2rem;
+}
+
+.avatar-title {
+    align-items: center;
+    display: flex;
+    font-size: 0.875rem;
+    font-weight: 500;
+    height: 100%;
+    justify-content: center;
+    width: 100%;
+}
+</style>
+{% endblock %}

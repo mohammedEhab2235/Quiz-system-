@@ -1,0 +1,289 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load admin_extras %}
+
+{% block title %}Manage Interface Access - {{ user_obj.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Interface Access Management</h2>
+                    <p class="text-muted mb-0">
+                        Managing access for: <strong>{{ user_obj.name }}</strong> ({{ user_obj.national_id }})
+                    </p>
+                </div>
+                <a href="{% url 'administration:user_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Users
+                </a>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <!-- User Information -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user"></i> User Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-5">Name:</dt>
+                                <dd class="col-sm-7">{{ user_obj.name }}</dd>
+                                
+                                <dt class="col-sm-5">National ID:</dt>
+                                <dd class="col-sm-7">{{ user_obj.national_id }}</dd>
+                                
+                                <dt class="col-sm-5">Position:</dt>
+                                <dd class="col-sm-7">{{ user_obj.position|default:"Not specified" }}</dd>
+                                
+                                <dt class="col-sm-5">Status:</dt>
+                                <dd class="col-sm-7">
+                                    {% if user_obj.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </dd>
+                                
+                                <dt class="col-sm-5">Role:</dt>
+                                <dd class="col-sm-7">
+                                    {% if user_obj.is_admin %}
+                                        <span class="badge bg-primary">Administrator</span>
+                                    {% elif user_obj.is_staff %}
+                                        <span class="badge bg-info">Staff</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">User</span>
+                                    {% endif %}
+                                </dd>
+                                
+                                <dt class="col-sm-5">Joined:</dt>
+                                <dd class="col-sm-7">{{ user_obj.date_joined|date:"M d, Y" }}</dd>
+                            </dl>
+                            
+                            {% if user_obj.is_admin %}
+                                <div class="alert alert-info" role="alert">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Note:</strong> This user is an administrator and has access to all interfaces by default.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interface Access Form -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs"></i> Interface Access Control
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if interfaces %}
+                                <form method="post" id="accessForm">
+                                    {% csrf_token %}
+                                    
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-label">Select Interfaces to Grant Access:</label>
+                                            <div>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">
+                                                    Select All
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectNone()">
+                                                    Select None
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        {% for interface in interfaces %}
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card border {% if interface.interface_id in user_access and user_access|lookup:interface.interface_id %}border-success{% endif %}">
+                                                    <div class="card-body p-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   id="interface_{{ interface.interface_id }}" 
+                                                                   name="interfaces" 
+                                                                   value="{{ interface.interface_id }}"
+                                                                   {% if interface.interface_id in user_access and user_access|lookup:interface.interface_id %}checked{% endif %}>
+                                                            <label class="form-check-label" for="interface_{{ interface.interface_id }}">
+                                                                <strong>{{ interface.module_name }}</strong>
+                                                            </label>
+                                                        </div>
+                                                        <div class="mt-2">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-function"></i> {{ interface.function }}
+                                                            </small>
+                                                            <br>
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-link"></i> <code>{{ interface.url }}</code>
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <a href="{% url 'administration:user_list' %}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Update Access
+                                        </button>
+                                    </div>
+                                </form>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No Interfaces Available</h5>
+                                    <p class="text-muted">Create interfaces first before managing user access.</p>
+                                    <a href="{% url 'administration:interface_create' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Create Interface
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Access Summary -->
+            {% if interfaces %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-list-check"></i> Current Access Summary
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-success">Granted Access:</h6>
+                                        <div id="grantedAccess">
+                                            {% for interface in interfaces %}
+                                                                {% if interface.interface_id in user_access and user_access|lookup:interface.interface_id %}
+                                                                    <span class="badge bg-success me-1 mb-1">{{ interface.module_name }}</span>
+                                                                {% endif %}
+                                                            {% empty %}
+                                                                <span class="text-muted">No access granted</span>
+                                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-danger">No Access:</h6>
+                                        <div id="noAccess">
+                                            {% for interface in interfaces %}
+                                                                {% if not interface.interface_id in user_access or not user_access|lookup:interface.interface_id %}
+                                                                    <span class="badge bg-secondary me-1 mb-1">{{ interface.module_name }}</span>
+                                                                {% endif %}
+                                                            {% empty %}
+                                                                <span class="text-muted">All access granted</span>
+                                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectAll() {
+        const checkboxes = document.querySelectorAll('input[name="interfaces"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            updateCardBorder(checkbox);
+        });
+        updateSummary();
+    }
+    
+    function selectNone() {
+        const checkboxes = document.querySelectorAll('input[name="interfaces"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            updateCardBorder(checkbox);
+        });
+        updateSummary();
+    }
+    
+    function updateCardBorder(checkbox) {
+        const card = checkbox.closest('.card');
+        if (checkbox.checked) {
+            card.classList.add('border-success');
+            card.classList.remove('border');
+        } else {
+            card.classList.remove('border-success');
+            card.classList.add('border');
+        }
+    }
+    
+    function updateSummary() {
+        const checkboxes = document.querySelectorAll('input[name="interfaces"]');
+        const grantedDiv = document.getElementById('grantedAccess');
+        const noAccessDiv = document.getElementById('noAccess');
+        
+        let grantedHtml = '';
+        let noAccessHtml = '';
+        
+        checkboxes.forEach(checkbox => {
+            const label = checkbox.nextElementSibling.querySelector('strong').textContent;
+            if (checkbox.checked) {
+                grantedHtml += `<span class="badge bg-success me-1 mb-1">${label}</span>`;
+            } else {
+                noAccessHtml += `<span class="badge bg-secondary me-1 mb-1">${label}</span>`;
+            }
+        });
+        
+        grantedDiv.innerHTML = grantedHtml || '<span class="text-muted">No access granted</span>';
+        noAccessDiv.innerHTML = noAccessHtml || '<span class="text-muted">All access granted</span>';
+    }
+    
+    // Add event listeners to checkboxes
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[name="interfaces"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateCardBorder(this);
+                updateSummary();
+            });
+            // Initialize card borders
+            updateCardBorder(checkbox);
+        });
+        
+        // Initialize summary
+        updateSummary();
+    });
+    
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+</script>
+
+
+{% endblock %}

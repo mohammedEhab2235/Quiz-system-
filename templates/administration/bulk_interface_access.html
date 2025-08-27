@@ -1,0 +1,419 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Interface Access Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Bulk Interface Access Management</h2>
+                    <p class="text-muted mb-0">Manage interface access for multiple users simultaneously</p>
+                </div>
+                <a href="{% url 'administration:user_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Users
+                </a>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <!-- User Selection -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-users"></i> Select Users
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if users %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label">Users:</label>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllUsers()">
+                                                Select All
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectNoUsers()">
+                                                Select None
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="user-list" style="max-height: 400px; overflow-y: auto;">
+                                    {% for user in users %}
+                                        <div class="card mb-2 user-card">
+                                            <div class="card-body p-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input user-checkbox" type="checkbox" 
+                                                           id="user_{{ user.id }}" 
+                                                           name="users" 
+                                                           value="{{ user.id }}">
+                                                    <label class="form-check-label" for="user_{{ user.id }}">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <strong>{{ user.name }}</strong>
+                                                                <br>
+                                                                <small class="text-muted">{{ user.national_id }}</small>
+                                                            </div>
+                                                            <div class="text-end">
+                                                                {% if user.is_admin %}
+                                                                    <span class="badge bg-primary">Admin</span>
+                                                                {% elif user.is_staff %}
+                                                                    <span class="badge bg-info">Staff</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">User</span>
+                                                                {% endif %}
+                                                                <br>
+                                                                <small class="text-muted">{{ user.position|default:"No position" }}</small>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <span id="selectedUserCount">0</span> of {{ users|length }} users selected
+                                    </small>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                                    <h6 class="text-muted">No Users Available</h6>
+                                    <p class="text-muted">No users found in the system.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interface Selection -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs"></i> Select Interfaces
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if interfaces %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label">Interfaces:</label>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllInterfaces()">
+                                                Select All
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectNoInterfaces()">
+                                                Select None
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="interface-list" style="max-height: 400px; overflow-y: auto;">
+                                    {% for interface in interfaces %}
+                                        <div class="card mb-2 interface-card">
+                                            <div class="card-body p-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input interface-checkbox" type="checkbox" 
+                                                           id="interface_{{ interface.interface_id }}" 
+                                                           name="interfaces" 
+                                                           value="{{ interface.interface_id }}">
+                                                    <label class="form-check-label" for="interface_{{ interface.interface_id }}">
+                                                        <strong>{{ interface.module_name }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-function"></i> {{ interface.function }}
+                                                        </small>
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-link"></i> <code>{{ interface.url }}</code>
+                                                        </small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <span id="selectedInterfaceCount">0</span> of {{ interfaces|length }} interfaces selected
+                                    </small>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-cogs fa-2x text-muted mb-3"></i>
+                                    <h6 class="text-muted">No Interfaces Available</h6>
+                                    <p class="text-muted">Create interfaces first before managing access.</p>
+                                    <a href="{% url 'administration:interface_create' %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> Create Interface
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Panel -->
+            {% if users and interfaces %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-tasks"></i> Bulk Actions
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="post" id="bulkAccessForm">
+                                    {% csrf_token %}
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="action" class="form-label">Action:</label>
+                                                <select class="form-select" id="action" name="action" required>
+                                                    <option value="">Select an action</option>
+                                                    <option value="grant">Grant Access</option>
+                                                    <option value="revoke">Revoke Access</option>
+                                                    <option value="replace">Replace Access (Remove all existing, add selected)</option>
+                                                </select>
+                                                <div class="form-text">
+                                                    <strong>Grant:</strong> Add selected interfaces to selected users<br>
+                                                    <strong>Revoke:</strong> Remove selected interfaces from selected users<br>
+                                                    <strong>Replace:</strong> Replace all user access with only selected interfaces
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Summary:</label>
+                                                <div class="alert alert-info" id="actionSummary">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    Select users, interfaces, and an action to see the summary.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'administration:user_list' %}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                            <i class="fas fa-save"></i> Apply Changes
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Hidden inputs for selected items -->
+                                    <div id="hiddenInputs"></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectAllUsers() {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            updateUserCard(checkbox);
+        });
+        updateCounts();
+        updateSummary();
+    }
+    
+    function selectNoUsers() {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            updateUserCard(checkbox);
+        });
+        updateCounts();
+        updateSummary();
+    }
+    
+    function selectAllInterfaces() {
+        const checkboxes = document.querySelectorAll('.interface-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            updateInterfaceCard(checkbox);
+        });
+        updateCounts();
+        updateSummary();
+    }
+    
+    function selectNoInterfaces() {
+        const checkboxes = document.querySelectorAll('.interface-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            updateInterfaceCard(checkbox);
+        });
+        updateCounts();
+        updateSummary();
+    }
+    
+    function updateUserCard(checkbox) {
+        const card = checkbox.closest('.user-card');
+        if (checkbox.checked) {
+            card.classList.add('border-primary');
+        } else {
+            card.classList.remove('border-primary');
+        }
+    }
+    
+    function updateInterfaceCard(checkbox) {
+        const card = checkbox.closest('.interface-card');
+        if (checkbox.checked) {
+            card.classList.add('border-success');
+        } else {
+            card.classList.remove('border-success');
+        }
+    }
+    
+    function updateCounts() {
+        const selectedUsers = document.querySelectorAll('.user-checkbox:checked').length;
+        const selectedInterfaces = document.querySelectorAll('.interface-checkbox:checked').length;
+        
+        document.getElementById('selectedUserCount').textContent = selectedUsers;
+        document.getElementById('selectedInterfaceCount').textContent = selectedInterfaces;
+    }
+    
+    function updateSummary() {
+        const selectedUsers = document.querySelectorAll('.user-checkbox:checked').length;
+        const selectedInterfaces = document.querySelectorAll('.interface-checkbox:checked').length;
+        const action = document.getElementById('action').value;
+        const summaryDiv = document.getElementById('actionSummary');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        let summaryText = '';
+        let canSubmit = false;
+        
+        if (selectedUsers === 0 || selectedInterfaces === 0 || !action) {
+            summaryText = '<i class="fas fa-info-circle"></i> Select users, interfaces, and an action to see the summary.';
+        } else {
+            canSubmit = true;
+            let actionText = '';
+            
+            switch(action) {
+                case 'grant':
+                    actionText = 'grant access to';
+                    break;
+                case 'revoke':
+                    actionText = 'revoke access from';
+                    break;
+                case 'replace':
+                    actionText = 'replace all access for';
+                    break;
+            }
+            
+            summaryText = `<i class="fas fa-check-circle"></i> Will ${actionText} <strong>${selectedInterfaces}</strong> interface(s) for <strong>${selectedUsers}</strong> user(s).`;
+        }
+        
+        summaryDiv.innerHTML = summaryText;
+        submitBtn.disabled = !canSubmit;
+        
+        // Update hidden inputs
+        updateHiddenInputs();
+    }
+    
+    function updateHiddenInputs() {
+        const hiddenInputsDiv = document.getElementById('hiddenInputs');
+        hiddenInputsDiv.innerHTML = '';
+        
+        // Add selected users
+        document.querySelectorAll('.user-checkbox:checked').forEach(checkbox => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'selected_users';
+            input.value = checkbox.value;
+            hiddenInputsDiv.appendChild(input);
+        });
+        
+        // Add selected interfaces
+        document.querySelectorAll('.interface-checkbox:checked').forEach(checkbox => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'selected_interfaces';
+            input.value = checkbox.value;
+            hiddenInputsDiv.appendChild(input);
+        });
+    }
+    
+    // Add event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // User checkboxes
+        document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateUserCard(this);
+                updateCounts();
+                updateSummary();
+            });
+        });
+        
+        // Interface checkboxes
+        document.querySelectorAll('.interface-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateInterfaceCard(this);
+                updateCounts();
+                updateSummary();
+            });
+        });
+        
+        // Action select
+        document.getElementById('action').addEventListener('change', updateSummary);
+        
+        // Form submission
+        document.getElementById('bulkAccessForm').addEventListener('submit', function(e) {
+            const selectedUsers = document.querySelectorAll('.user-checkbox:checked').length;
+            const selectedInterfaces = document.querySelectorAll('.interface-checkbox:checked').length;
+            const action = document.getElementById('action').value;
+            
+            if (selectedUsers === 0 || selectedInterfaces === 0 || !action) {
+                e.preventDefault();
+                alert('Please select users, interfaces, and an action before submitting.');
+                return;
+            }
+            
+            const confirmMessage = `Are you sure you want to ${action} access for ${selectedUsers} user(s) and ${selectedInterfaces} interface(s)?`;
+            if (!confirm(confirmMessage)) {
+                e.preventDefault();
+            }
+        });
+        
+        // Initialize
+        updateCounts();
+        updateSummary();
+    });
+    
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+</script>
+{% endblock %}

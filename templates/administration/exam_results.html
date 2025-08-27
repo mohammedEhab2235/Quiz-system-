@@ -1,0 +1,427 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Exam Results - {{ exam.title }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">Exam Results</h4>
+                            <small class="text-muted">{{ exam.title }} - {{ exam.course.name }}</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'administration:exam_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Exams
+                            </a>
+                            <button class="btn btn-outline-primary" onclick="exportResults()">
+                                <i class="fas fa-download me-2"></i>Export Results
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Overview -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary mb-0">{{ total_attempts }}</h3>
+                            <small class="text-muted">Total Attempts</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success mb-0">{{ completed_attempts }}</h3>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-info mb-0">{{ average_score|floatformat:1 }}%</h3>
+                            <small class="text-muted">Average Score</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-warning mb-0">{{ pass_rate|floatformat:1 }}%</h3>
+                            <small class="text-muted">Pass Rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status_filter" class="form-label">Status</label>
+                            <select class="form-select" id="status_filter" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="not_started" {% if request.GET.status == 'not_started' %}selected{% endif %}>Not Started</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="score_range" class="form-label">Score Range</label>
+                            <select class="form-select" id="score_range" name="score_range">
+                                <option value="">All Scores</option>
+                                <option value="90-100" {% if request.GET.score_range == '90-100' %}selected{% endif %}>90-100%</option>
+                                <option value="80-89" {% if request.GET.score_range == '80-89' %}selected{% endif %}>80-89%</option>
+                                <option value="70-79" {% if request.GET.score_range == '70-79' %}selected{% endif %}>70-79%</option>
+                                <option value="60-69" {% if request.GET.score_range == '60-69' %}selected{% endif %}>60-69%</option>
+                                <option value="0-59" {% if request.GET.score_range == '0-59' %}selected{% endif %}>Below 60%</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search Student</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ request.GET.search }}" placeholder="Search by name or National ID...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <a href="{% url 'administration:exam_results' exam.exam_id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Student Results ({{ user_exams.count }})</h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="selectAll()">
+                                Select All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearSelection()">
+                                Clear
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="bulkActions()">
+                                Bulk Actions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if user_exams %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 5%">
+                                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleAll()">
+                                        </th>
+                                        <th style="width: 25%">Student</th>
+                                        <th style="width: 15%">Status</th>
+                                        <th style="width: 10%">Score</th>
+                                        <th style="width: 10%">Grade</th>
+                                        <th style="width: 15%">Duration</th>
+                                        <th style="width: 15%">Completed At</th>
+                                        <th style="width: 15%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_exam in user_exams %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" class="result-checkbox" value="{{ user_exam.id }}">
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                    {{ user_exam.user.name|first }}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ user_exam.user.name }}</h6>
+                                                    <small class="text-muted">{{ user_exam.user.national_id }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if user_exam.status == 'completed' %}
+                                                <span class="badge bg-success">Completed</span>
+                                            {% elif user_exam.status == 'in_progress' %}
+                                                <span class="badge bg-warning">In Progress</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Not Started</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user_exam.score is not None %}
+                                                <div class="d-flex align-items-center">
+                                                    <span class="me-2">{{ user_exam.score|floatformat:1 }}%</span>
+                                                    <div class="progress" style="width: 50px; height: 8px;">
+                                                        <div class="progress-bar {% if user_exam.score >= exam.passing_score %}bg-success{% elif user_exam.score >= 70 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                             data-width="{{ user_exam.score|default:'00}"></div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user_exam.score is not None %}
+                                                {% if user_exam.score >= exam.passing_score %}
+                                                    <span class="badge bg-success">Pass</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Fail</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user_exam.time_taken %}
+                                                {{ user_exam.time_taken|floatformat:0 }} min
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user_exam.completed_at %}
+                                                <div>
+                                                    <small>{{ user_exam.completed_at|date:"M d, Y" }}</small><br>
+                                                    <small class="text-muted">{{ user_exam.completed_at|time:"H:i" }}</small>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                {% if user_exam.status == 'completed' %}
+                                                    <a href="{% url 'administration:user_exam_detail' user_exam.id %}" 
+                                                       class="btn btn-outline-primary" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <button class="btn btn-outline-info" title="View History" 
+                                                        onclick="viewHistory('{{ user_exam.user.id }}');">
+                                                    <i class="fas fa-history"></i>
+                                                </button>
+                                                {% if user_exam.status != 'not_started' %}
+                                                    <button class="btn btn-outline-warning" title="Reset Exam" 
+                                                            onclick="resetExam('{{ user_exam.id }}', '{{ user_exam.user.name }}');">
+                                                        <i class="fas fa-redo"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                            <nav aria-label="Results pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}">
+                                                <i class="fas fa-angle-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}">
+                                                <i class="fas fa-angle-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Results Found</h5>
+                            <p class="text-muted mb-3">No students have taken this exam yet or no results match your filters.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAll() {
+    const selectAll = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.result-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+}
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.result-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.getElementById('selectAllCheckbox').checked = true;
+}
+
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.result-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('selectAllCheckbox').checked = false;
+}
+
+function bulkActions() {
+    const selected = document.querySelectorAll('.result-checkbox:checked');
+    if (selected.length === 0) {
+        alert('Please select at least one result.');
+        return;
+    }
+    
+    const action = prompt('Choose action:\n1. Reset selected exams\n2. Export selected results\n\nEnter 1 or 2:');
+    
+    if (action === '1') {
+        if (confirm(`Are you sure you want to reset ${selected.length} exam(s)? This action cannot be undone.`)) {
+            // Implement bulk reset
+            const ids = Array.from(selected).map(cb => cb.value);
+            bulkResetExams(ids);
+        }
+    } else if (action === '2') {
+        // Implement bulk export
+        const ids = Array.from(selected).map(cb => cb.value);
+        exportSelectedResults(ids);
+    }
+}
+
+function viewHistory(userId) {
+    window.open(`/administration/user/${userId}/history/`, '_blank');
+}
+
+function resetExam(userExamId, studentName) {
+    if (confirm(`Are you sure you want to reset the exam for ${studentName}?\n\nThis will:\n- Delete all current answers\n- Reset the exam status\n- Allow the student to retake the exam\n\nThis action cannot be undone.`)) {
+        fetch(`/administration/user-exam/${userExamId}/reset/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error resetting exam: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error resetting exam: ' + error);
+        });
+    }
+}
+
+function exportResults() {
+    window.open(`/administration/exam/{{ exam.exam_id }}/export-results/`, '_blank');
+}
+
+function bulkResetExams(ids) {
+    fetch('/administration/bulk-reset-exams/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_exam_ids: ids })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error resetting exams: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error resetting exams: ' + error);
+    });
+}
+
+function exportSelectedResults(ids) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/administration/export-selected-results/';
+    form.target = '_blank';
+    
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    form.appendChild(csrfInput);
+    
+    const idsInput = document.createElement('input');
+    idsInput.type = 'hidden';
+    idsInput.name = 'user_exam_ids';
+    idsInput.value = JSON.stringify(ids);
+    form.appendChild(idsInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+// Set progress bar widths from data attributes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function(bar) {
+        bar.style.width = bar.getAttribute('data-width') + '%';
+    });
+});
+</script>
+{% endblock %}
